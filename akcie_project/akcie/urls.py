@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -8,14 +9,23 @@ urlpatterns = [
     path('akcie/create/', views.akcie_create, name='akcie_create'),
     path('akcie/<int:pk>/update/', views.akcie_update, name='akcie_update'),
     path('akcie/<int:pk>/delete/', views.akcie_delete, name='akcie_delete'),
+    path('akcie/export/', views.export_akcie_csv, name='export_akcie_csv'),
+    path('akcie/import/', views.import_akcie_csv, name='import_akcie_csv'),
+    path('akcie/report/', views.generate_akcie_pdf, name='generate_akcie_pdf'),
     path('transakce/', views.transakce_list, name='transakce_list'),
     path('transakce/<int:pk>/', views.transakce_detail, name='transakce_detail'),
     path('transakce/create/', views.transakce_create, name='transakce_create'),
     path('transakce/<int:pk>/update/', views.transakce_update, name='transakce_update'),
     path('transakce/<int:pk>/delete/', views.transakce_delete, name='transakce_delete'),
+    path('transakce/export/', views.export_transakce_csv, name='export_transakce_csv'),
+    path('transakce/report/', views.generate_transakce_pdf, name='generate_transakce_pdf'),
     path('dividendy/', views.dividenda_list, name='dividenda_list'),
     path('dividendy/<int:pk>/', views.dividenda_detail, name='dividenda_detail'),
     path('dividendy/create/', views.dividenda_create, name='dividenda_create'),
     path('dividendy/<int:pk>/update/', views.dividenda_update, name='dividenda_update'),
     path('dividendy/<int:pk>/delete/', views.dividenda_delete, name='dividenda_delete'),
+    path('dividendy/export/', views.export_dividendy_csv, name='export_dividendy_csv'),
+    path('dividendy/report/', views.generate_dividenda_pdf, name='generate_dividenda_pdf'),
+    path('login/', auth_views.LoginView.as_view(template_name='akcie/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

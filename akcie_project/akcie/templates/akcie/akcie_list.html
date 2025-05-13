@@ -1,10 +1,18 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
 <h1>Seznam akcií</h1>
+
+<form method="get" action="">
+    <input type="text" name="q" placeholder="Hledat..." value="{{ request.GET.q }}">
+    <button type="submit">Hledat</button>
+</form>
+
 <ul>
     {% for akcie in akcie %}
         <li><a href="/akcie/{{ akcie.id }}/">{{ akcie.nazev }}</a></li>
     {% endfor %}
 </ul>
 <a href="/akcie/create/">Přidat novou akcii</a>
+<a href="/akcie/export/">Exportovat akcie do CSV</a>
+<a href="/akcie/import/">Importovat akcie z CSV</a>
 {% endblock %}

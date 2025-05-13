@@ -28,6 +28,12 @@ nav ul li a {
     text-decoration: none;
 }
 
+/* Zvýraznění navigačních odkazů při najetí myší */
+nav ul li a:hover {
+    text-decoration: underline;
+    color: #ffcc00;
+}
+
 h1 {
     color: #444;
 }
@@ -55,4 +61,54 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+/* Stylování tabulek */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+}
+
+table th, table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+}
+
+table th {
+    background-color: #333;
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+table tr:hover {
+    background-color: #ddd;
+}
+
+/* Tlačítka */
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Přidání stínů a zaoblení pro karty */
+.card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    margin: 20px 0;
 }
