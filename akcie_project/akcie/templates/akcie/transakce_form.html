@@ -1,0 +1,7 @@
+<h1>Vytvořit novou transakci</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Uložit</button>
+</form>
+<a href="/transakce/">Zpět na seznam transakcí</a>

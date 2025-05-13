@@ -1,0 +1,11 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Detail transakce</h1>
+<p>Typ: {{ transakce.typ }}</p>
+<p>Akcie: {{ transakce.akcie.nazev }}</p>
+<p>Datum: {{ transakce.datum }}</p>
+<p>Množství: {{ transakce.mnozstvi }}</p>
+<p>Cena: {{ transakce.cena }}</p>
+<a href="/transakce/{{ transakce.id }}/update/">Upravit</a>
+<a href="/transakce/{{ transakce.id }}/delete/">Smazat</a>
+{% endblock %}

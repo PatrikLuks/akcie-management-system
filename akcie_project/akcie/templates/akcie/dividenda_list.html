@@ -1,0 +1,10 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Seznam dividend</h1>
+<ul>
+    {% for dividenda in dividendy %}
+        <li><a href="/dividendy/{{ dividenda.id }}/">Dividenda - {{ dividenda.akcie.nazev }}</a></li>
+    {% endfor %}
+</ul>
+<a href="/dividendy/create/">Přidat novou dividendu</a>
+{% endblock %}

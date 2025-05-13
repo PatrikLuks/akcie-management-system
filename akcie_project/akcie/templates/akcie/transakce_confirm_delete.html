@@ -1,0 +1,8 @@
+<h1>Opravdu chcete smazat tuto transakci?</h1>
+<p>Typ: {{ transakce.typ }}</p>
+<p>Akcie: {{ transakce.akcie.nazev }}</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ano, smazat</button>
+</form>
+<a href="/transakce/">Zpět na seznam transakcí</a>

@@ -1,0 +1,9 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Detail dividendy</h1>
+<p>Akcie: {{ dividenda.akcie.nazev }}</p>
+<p>Datum: {{ dividenda.datum }}</p>
+<p>Částka: {{ dividenda.castka }}</p>
+<a href="/dividendy/{{ dividenda.id }}/update/">Upravit</a>
+<a href="/dividendy/{{ dividenda.id }}/delete/">Smazat</a>
+{% endblock %}

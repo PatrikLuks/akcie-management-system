@@ -1,0 +1,8 @@
+<h1>Opravdu chcete smazat tuto dividendu?</h1>
+<p>Akcie: {{ dividenda.akcie.nazev }}</p>
+<p>Částka: {{ dividenda.castka }}</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ano, smazat</button>
+</form>
+<a href="/dividendy/">Zpět na seznam dividend</a>

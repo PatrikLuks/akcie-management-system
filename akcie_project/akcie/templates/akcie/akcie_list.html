@@ -1,0 +1,10 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Seznam akcií</h1>
+<ul>
+    {% for akcie in akcie %}
+        <li><a href="/akcie/{{ akcie.id }}/">{{ akcie.nazev }}</a></li>
+    {% endfor %}
+</ul>
+<a href="/akcie/create/">Přidat novou akcii</a>
+{% endblock %}

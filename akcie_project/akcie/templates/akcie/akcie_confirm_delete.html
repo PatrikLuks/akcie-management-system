@@ -1,0 +1,7 @@
+<h1>Opravdu chcete smazat tuto akcii?</h1>
+<p>Název: {{ akcie.nazev }}</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ano, smazat</button>
+</form>
+<a href="/akcie/">Zpět na seznam akcií</a>

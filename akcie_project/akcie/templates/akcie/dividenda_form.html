@@ -1,0 +1,7 @@
+<h1>Vytvořit novou dividendu</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Uložit</button>
+</form>
+<a href="/dividendy/">Zpět na seznam dividend</a>

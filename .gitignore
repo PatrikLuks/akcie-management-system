@@ -1,0 +1,9 @@
+# Soubory a složky ignorované Gitem
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+/staticfiles/
+.DS_Store
+.env

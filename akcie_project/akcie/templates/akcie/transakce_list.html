@@ -1,0 +1,10 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Seznam transakcí</h1>
+<ul>
+    {% for transakce in transakce %}
+        <li><a href="/transakce/{{ transakce.id }}/">{{ transakce.typ }} - {{ transakce.akcie.nazev }}</a></li>
+    {% endfor %}
+</ul>
+<a href="/transakce/create/">Přidat novou transakci</a>
+{% endblock %}

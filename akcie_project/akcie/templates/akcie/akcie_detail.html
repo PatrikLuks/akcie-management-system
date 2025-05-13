@@ -1,0 +1,13 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<h1>Detail akcie</h1>
+<p>Název: {{ akcie.nazev }}</p>
+<p>Počet kusů: {{ akcie.pocet_ks }}</p>
+<p>Cena za kus: {{ akcie.cena_za_kus }}</p>
+<p>Hodnota: {{ akcie.hodnota }}</p>
+<p>Nákup: {{ akcie.nakup }}</p>
+<p>Zisk / Ztráta: {{ akcie.zisk_ztrata }}</p>
+<p>Dividenda: {{ akcie.dividenda }}</p>
+<a href="/akcie/{{ akcie.id }}/update/">Upravit</a>
+<a href="/akcie/{{ akcie.id }}/delete/">Smazat</a>
+{% endblock %}

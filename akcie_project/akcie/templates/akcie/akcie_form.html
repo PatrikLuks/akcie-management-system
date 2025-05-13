@@ -1,0 +1,7 @@
+<h1>Vytvořit novou akcii</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Uložit</button>
+</form>
+<a href="/akcie/">Zpět na seznam akcií</a>
