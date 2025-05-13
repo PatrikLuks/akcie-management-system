@@ -3,9 +3,12 @@ from .models import Akcie, Transakce, Dividenda, CustomUser
 from django.utils.timezone import now
 from django.urls import reverse
 from .forms import AkcieForm
+from unittest.mock import patch
+from .views import fetch_akcie_data, fetch_hot_investments
 
 class AkcieModelTest(TestCase):
     def setUp(self):
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
         self.akcie = Akcie.objects.create(
             nazev="Testovací akcie",
             pocet_ks=100,
@@ -13,7 +16,8 @@ class AkcieModelTest(TestCase):
             hodnota=15050.00,
             nakup=14000.00,
             zisk_ztrata=1050.00,
-            dividenda=500.00
+            dividenda=500.00,
+            user=self.user
         )
 
     def test_akcie_str(self):
@@ -21,6 +25,7 @@ class AkcieModelTest(TestCase):
 
 class TransakceModelTest(TestCase):
     def setUp(self):
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
         self.akcie = Akcie.objects.create(
             nazev="Testovací akcie",
             pocet_ks=100,
@@ -28,7 +33,8 @@ class TransakceModelTest(TestCase):
             hodnota=15050.00,
             nakup=14000.00,
             zisk_ztrata=1050.00,
-            dividenda=500.00
+            dividenda=500.00,
+            user=self.user
         )
         self.transakce = Transakce.objects.create(
             akcie=self.akcie,
@@ -43,6 +49,7 @@ class TransakceModelTest(TestCase):
 
 class DividendaModelTest(TestCase):
     def setUp(self):
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
         self.akcie = Akcie.objects.create(
             nazev="Testovací akcie",
             pocet_ks=100,
@@ -50,7 +57,8 @@ class DividendaModelTest(TestCase):
             hodnota=15050.00,
             nakup=14000.00,
             zisk_ztrata=1050.00,
-            dividenda=500.00
+            dividenda=500.00,
+            user=self.user
         )
         self.dividenda = Dividenda.objects.create(
             akcie=self.akcie,
@@ -199,3 +207,39 @@ class AkcieCRUDTest(TestCase):
         response = self.client.post(reverse('akcie_delete', args=[self.akcie.id]))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Akcie.objects.filter(id=self.akcie.id).exists())
+
+class APITest(TestCase):
+    @patch('requests.get')
+    def test_fetch_akcie_data_success(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = [{'name': 'Stock A'}, {'name': 'Stock B'}]
+
+        data = fetch_akcie_data()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['name'], 'Stock A')
+
+    @patch('requests.get')
+    def test_fetch_akcie_data_failure(self, mock_get):
+        mock_get.return_value.status_code = 500
+
+        data = fetch_akcie_data()
+        self.assertEqual(data, [])
+
+    @patch('akcie.views.yf.Ticker')
+    def test_fetch_hot_investments_success(self, mock_ticker):
+        mock_ticker.return_value.info = {
+            'shortName': 'Apple Inc.',
+            'regularMarketPrice': 212.31,
+            'marketCap': 3171094364160
+        }
+
+        data = fetch_hot_investments()
+        self.assertEqual(len(data), 10)
+        self.assertEqual(data[0]['nazev'], 'Apple Inc.')
+
+    @patch('akcie.views.yf.Ticker')
+    def test_fetch_hot_investments_failure(self, mock_ticker):
+        mock_ticker.side_effect = Exception("API Error")
+
+        data = fetch_hot_investments()
+        self.assertEqual(data, [])

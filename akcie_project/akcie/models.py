@@ -1,6 +1,12 @@
 from django.db import models
 from django.utils.timezone import now
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+def get_default_user():
+    default_user = get_user_model().objects.first()
+    return default_user.id if default_user else None
 
 class CustomUser(AbstractUser):
     """
@@ -16,6 +22,7 @@ class Akcie(models.Model):
     """
     Model reprezentující akcie s detaily o počtu, ceně a zisku/ztrátě.
     """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='akcie', default=get_default_user)
     nazev = models.CharField(max_length=100)
     pocet_ks = models.IntegerField()
     cena_za_kus = models.DecimalField(max_digits=10, decimal_places=2)

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from .views import user_preferences
+from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -16,6 +16,8 @@ urlpatterns = [
     path('akcie/import_excel/', views.import_excel, name='import_excel'),
     path('akcie/export_excel/', views.export_excel, name='export_excel'),
     path('akcie/export_json/', views.export_akcie_json, name='export_akcie_json'),
+    path('akcie/search/', search_stocks, name='search_stocks'),
+    path('akcie/add/', add_stock, name='add_stock'),
     path('transakce/', views.transakce_list, name='transakce_list'),
     path('transakce/<int:pk>/', views.transakce_detail, name='transakce_detail'),
     path('transakce/create/', views.transakce_create, name='transakce_create'),
@@ -40,4 +42,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('preferences/', user_preferences, name='user_preferences'),
     path('export_all_data_zip/', views.export_all_data_zip, name='export_all_data_zip'),
+    path('export-hot-investments/', export_hot_investments_csv, name='export_hot_investments_csv'),
 ]

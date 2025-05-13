@@ -2,18 +2,43 @@
 {% block content %}
 <h1>Seznam akcií</h1>
 
-<form method="get" action="">
-    <input type="text" name="q" placeholder="Hledat..." value="{{ request.GET.q }}">
-    <button type="submit">Hledat</button>
-</form>
-
-<ul>
+<ul class="akcie-list">
     {% for akcie in akcie %}
-        <li><a href="/akcie/{{ akcie.id }}/">{{ akcie.nazev }}</a></li>
+        <li class="akcie-item">
+            <strong>{{ akcie.nazev }}</strong>
+            <span>Počet: {{ akcie.pocet_ks }}</span>
+            <span>Hodnota: {{ akcie.hodnota }} Kč</span>
+            <span>Zisk/Ztráta: {{ akcie.zisk_ztrata }} Kč</span>
+            <a href="/akcie/{{ akcie.id }}/" class="details-link">Podrobnosti</a>
+        </li>
     {% endfor %}
 </ul>
 <a href="/akcie/create/">Přidat novou akcii</a>
 <a href="/akcie/export/">Exportovat akcie do CSV</a>
 <a href="/akcie/import/">Importovat akcie z CSV</a>
 <a href="{% url 'export_excel' %}" class="button">Exportovat do Excelu</a>
+
+<style>
+.akcie-list {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+.akcie-item {
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+}
+.details-link {
+    color: #007bff;
+    text-decoration: none;
+    margin-top: 5px;
+}
+.details-link:hover {
+    text-decoration: underline;
+}
+</style>
 {% endblock %}

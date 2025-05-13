@@ -19,8 +19,45 @@ from django.core.mail import EmailMessage
 from django.utils.timezone import now
 import os
 import zipfile
+import requests
+import yfinance as yf
 from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser
 from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm
+
+API_URL = 'https://example.com/api/akcie'  # Nahraďte skutečnou URL API
+TREND_API_URL = 'https://api.example.com/trends'  # Skutečná URL API
+
+def fetch_akcie_data():
+    """
+    Získá data o akciích z externího API.
+    """
+    response = requests.get(API_URL)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return []
+
+def fetch_hot_investments():
+    """
+    Získá 10 nejlepších investic podle trendů pomocí knihovny yfinance.
+    """
+    try:
+        # Example: Fetch data for popular tickers
+        tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK-B', 'JNJ', 'V']
+        investments = []
+        for idx, ticker in enumerate(tickers):
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            investments.append({
+                'id': idx + 1,  # Simulated ID for demonstration purposes
+                'nazev': info.get('shortName', ticker),
+                'cena_za_ks': info.get('regularMarketPrice', 'N/A'),
+                'hodnota': info.get('marketCap', 'N/A')
+            })
+        return investments[:10]  # Vrátí prvních 10 investic
+    except Exception as e:
+        print(f"Chyba při získávání dat z yfinance: {e}")
+        return []
 
 def log_aktivita(akce, uzivatel=None):
     """
@@ -40,8 +77,13 @@ def filter_akcie(query):
         Q(cena_za_kus__icontains=query)
     )
 
+@login_required
 def index(request):
-    return render(request, 'akcie/index.html')
+    """
+    Úvodní stránka zobrazující akcie vybrané uživatelem.
+    """
+    user_stocks = Akcie.objects.filter(user=request.user)  # Assuming Akcie has a user field
+    return render(request, 'akcie/index.html', {'user_stocks': user_stocks})
 
 @login_required
 def akcie_list(request):
@@ -77,7 +119,13 @@ def akcie_create(request):
     if request.method == 'POST':
         form = AkcieForm(request.POST)
         if form.is_valid():
-            form.save()
+            akcie = form.save(commit=False)
+            # Calculate zisk/ztrata based on purchase and current value
+            akcie.hodnota = akcie.pocet_ks * akcie.cena_za_kus
+            akcie.nakup = akcie.pocet_ks * akcie.cena_za_kus  # Assuming purchase price is the same as cena_za_kus
+            akcie.zisk_ztrata = akcie.hodnota - akcie.nakup
+            akcie.dividenda = akcie.hodnota * 0.05
+            akcie.save()
             return redirect('akcie_list')
     else:
         form = AkcieForm()
@@ -119,15 +167,30 @@ def transakce_detail(request, pk):
     transakce = Transakce.objects.get(pk=pk)
     return render(request, 'akcie/transakce_detail.html', {'transakce': transakce})
 
+@login_required
 def transakce_create(request):
+    """
+    Vytvoření nové transakce s daty z API.
+    """
+    akcie_data = fetch_akcie_data()
+    if not akcie_data:
+        akcie_data = [{'nazev': 'Žádná data nejsou dostupná'}]  # Výchozí hodnota
+
     if request.method == 'POST':
         form = TransakceForm(request.POST)
         if form.is_valid():
-            form.save()
+            transakce = form.save(commit=False)
+            selected_akcie = next((akcie for akcie in akcie_data if akcie['nazev'] == form.cleaned_data['akcie']), None)
+            if selected_akcie:
+                transakce.cena = selected_akcie.get('cena_za_ks', 0) * form.cleaned_data['mnozstvi']
+                transakce.hodnota = selected_akcie.get('hodnota', 0)
+                transakce.zisk_ztrata = selected_akcie.get('zisk', 0)
+                transakce.dividenda = selected_akcie.get('dividenda', 0)
+            transakce.save()
             return redirect('transakce_list')
     else:
         form = TransakceForm()
-    return render(request, 'akcie/transakce_form.html', {'form': form})
+    return render(request, 'akcie/transakce_form.html', {'form': form, 'akcie_data': akcie_data})
 
 def transakce_update(request, pk):
     transakce = get_object_or_404(Transakce, pk=pk)
@@ -589,3 +652,74 @@ def user_preferences(request):
     else:
         form = CustomUserForm(instance=request.user)
     return render(request, 'akcie/user_preferences.html', {'form': form})
+
+def export_hot_investments_csv(request):
+    """Exportuje seznam hot investic do CSV."""
+    hot_investments = fetch_hot_investments()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="hot_investments.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Název', 'Cena za kus', 'Hodnota'])
+    for investment in hot_investments:
+        writer.writerow([investment['nazev'], investment['cena_za_ks'], investment['hodnota']])
+
+    return response
+
+def search_stocks(request):
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse([], safe=False)
+
+    try:
+        # Search by ticker symbol
+        stock = yf.Ticker(query)
+        info = stock.info
+        result = [{
+            'nazev': info.get('shortName', query),
+            'ticker': query,
+            'cena': info.get('regularMarketPrice', 'N/A')
+        }]
+        return JsonResponse(result, safe=False)
+    except Exception as e:
+        print(f"Chyba při hledání akcie podle tickeru: {e}")
+
+    try:
+        # Search by stock name (example: broader search logic)
+        tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']  # Example list of tickers
+        results = []
+        for ticker in tickers:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            if query.lower() in info.get('shortName', '').lower():
+                results.append({
+                    'nazev': info.get('shortName', ticker),
+                    'ticker': ticker,
+                    'cena': info.get('regularMarketPrice', 'N/A')
+                })
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        print(f"Chyba při hledání akcie podle názvu: {e}")
+        return JsonResponse([], safe=False)
+
+def add_stock(request):
+    ticker = request.GET.get('ticker', '')
+    if not ticker:
+        return JsonResponse({'error': 'Ticker is required'}, status=400)
+
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        Akcie.objects.create(
+            nazev=info.get('shortName', ticker),
+            pocet_ks=0,  # Default value, can be updated later
+            cena_za_kus=info.get('regularMarketPrice', 0),
+            hodnota=0,  # Default value
+            nakup=0,  # Default value
+            zisk_ztrata=0,  # Default value
+            dividenda=0  # Default value
+        )
+        return JsonResponse({'message': 'Akcie byla úspěšně přidána!'}, status=201)
+    except Exception as e:
+        print(f"Chyba při přidávání akcie: {e}")
+        return JsonResponse({'error': 'Došlo k chybě při přidávání akcie.'}, status=500)

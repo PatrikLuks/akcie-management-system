@@ -9,11 +9,11 @@ body {
     line-height: 1.6;
 }
 
+/* Oprava stylů menu */
 nav {
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #333; /* Dark background for contrast */
+    color: #000; /* Change text color to black */
+    padding: 10px;
 }
 
 nav ul {
@@ -21,7 +21,6 @@ nav ul {
     padding: 0;
     margin: 0;
     display: flex;
-    justify-content: space-around;
 }
 
 nav ul li {
@@ -29,14 +28,23 @@ nav ul li {
 }
 
 nav ul li a {
-    color: #fff;
+    color: #fff; /* Ensure links are also white */
     text-decoration: none;
     font-weight: bold;
-    transition: color 0.3s;
 }
 
 nav ul li a:hover {
-    color: #ffcc00;
+    text-decoration: underline;
+}
+
+nav a {
+    color: #000 !important; /* Force links in the menu to have black text */
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+nav a:hover {
+    text-decoration: underline;
 }
 
 h1 {
@@ -131,4 +139,35 @@ button:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 20px;
     margin: 20px 0;
+}
+
+/* Stylování pro seznam hot investic */
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    background-color: #f9f9f9;
+    margin: 10px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+ul li strong {
+    color: #007bff;
+    font-size: 1.2em;
+}
+
+@media (max-width: 768px) {
+    .investment-item, .akcie-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .details-link {
+        margin-top: 10px;
+    }
 }

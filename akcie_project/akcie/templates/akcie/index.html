@@ -1,6 +1,64 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Vítejte v aplikaci Akcie</h1>
-<p>Toto je úvodní stránka aplikace.</p>
-<a href="/akcie/">Seznam akcií</a>
+<h1>Vítejte na Akcie Management Systému</h1>
+<p>Spravujte své investice efektivně a přehledně.</p>
+
+<h2>Vaše vybrané akcie</h2>
+<div id="user-stocks" class="stock-list">
+    {% if user_stocks %}
+    <ul>
+      {% for stock in user_stocks %}
+        <li class="stock-item">
+          <strong>{{ stock.nazev }}</strong>: {{ stock.cena_za_kus }} Kč/ks, Hodnota: {{ stock.hodnota }} Kč
+          <a href="/akcie/{{ stock.id }}/" class="details-link">Podrobnosti</a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Nemáte žádné vybrané akcie.</p>
+    {% endif %}
+</div>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+}
+.stock-list {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 800px;
+}
+.stock-item {
+    margin: 10px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+}
+.details-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.details-link:hover {
+    text-decoration: underline;
+}
+</style>
+
 {% endblock %}

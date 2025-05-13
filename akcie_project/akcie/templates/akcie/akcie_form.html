@@ -1,7 +1,65 @@
-<h1>Vytvořit novou akcii</h1>
+<h1>Přidat novou akcii</h1>
+
+<div id="stock-search">
+    <input type="text" id="search-bar" placeholder="Vyhledat akcii...">
+    <button id="search-button">Hledat</button>
+</div>
+
+<div id="search-results">
+    <!-- Výsledky hledání se zobrazí zde -->
+</div>
+
+<script>
+    document.getElementById('search-button').addEventListener('click', function() {
+        const query = document.getElementById('search-bar').value.trim();
+        if (!query) {
+            alert('Prosím zadejte platný ticker symbol nebo název akcie.');
+            return;
+        }
+        fetch(`/akcie/search/?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('search-results');
+                resultsDiv.innerHTML = '';
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p>Žádné výsledky nenalezeny.</p>';
+                    return;
+                }
+                data.forEach(stock => {
+                    const stockDiv = document.createElement('div');
+                    stockDiv.className = 'stock-item';
+                    stockDiv.innerHTML = `
+                        <span>${stock.nazev} (${stock.ticker}) - ${stock.cena} Kč</span>
+                        <button onclick="addStock('${stock.ticker}')">+</button>
+                    `;
+                    resultsDiv.appendChild(stockDiv);
+                });
+            });
+    });
+
+    function addStock(ticker) {
+        fetch(`/akcie/add/?ticker=${ticker}`, { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    alert('Akcie byla přidána do seznamu!');
+                } else {
+                    alert('Došlo k chybě při přidávání akcie.');
+                }
+            });
+    }
+</script>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateField = document.querySelector('input[name="datum"]');
+            if (dateField) {
+                dateField.readOnly = true; // Make the date field read-only
+            }
+        });
+    </script>
     <button type="submit">Uložit</button>
 </form>
 <a href="/akcie/">Zpět na seznam akcií</a>

@@ -1,7 +1,31 @@
-<h1>Vytvořit novou transakci</h1>
-<form method="post">
+{% extends 'akcie/base.html' %}
+
+{% block content %}
+  <h2>Vytvořit transakci</h2>
+  <form method="post">
     {% csrf_token %}
+    <div>
+      <label for="id_akcie">Akcie:</label>
+      <div id="dropdown-container">
+        <div id="loading-spinner" style="display: none;">Načítání...</div>
+        <select id="api-dropdown">
+          <!-- Dropdown options will be loaded dynamically -->
+        </select>
+      </div>
+    </div>
     {{ form.as_p }}
     <button type="submit">Uložit</button>
-</form>
-<a href="/transakce/">Zpět na seznam transakcí</a>
+  </form>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const spinner = document.getElementById('loading-spinner');
+        const dropdown = document.getElementById('api-dropdown');
+        spinner.style.display = 'block';
+        // Simulate data loading
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            dropdown.innerHTML = '<option>Option 1</option><option>Option 2</option>';
+        }, 2000);
+    });
+  </script>
+{% endblock %}
