@@ -1,0 +1,10 @@
+{% extends 'akcie/base.html' %}
+
+{% block content %}
+  <h2>Uživatelské preference</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Uložit</button>
+  </form>
+{% endblock %}

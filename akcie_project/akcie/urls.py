@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import user_preferences
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -36,4 +37,5 @@ urlpatterns = [
     path('aktivity/export_pdf/', views.export_aktivity_pdf, name='export_aktivity_pdf'),
     path('login/', auth_views.LoginView.as_view(template_name='akcie/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('preferences/', user_preferences, name='user_preferences'),
 ]

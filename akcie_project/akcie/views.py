@@ -16,8 +16,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 from io import BytesIO
 from django.urls import reverse
 from django.core.mail import EmailMessage
-from .models import Akcie, Transakce, Dividenda, Aktivita
-from .forms import AkcieForm, TransakceForm, DividendaForm
+from django.utils.timezone import now
+import os
+from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser
+from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm
 
 def log_aktivita(akce, uzivatel=None):
     Aktivita.objects.create(akce=akce, uzivatel=uzivatel)
@@ -426,6 +428,14 @@ def dashboard(request):
         .order_by('akcie__nazev')
     )
 
+    current_year = now().year
+    months = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"]
+    investment_data = []
+
+    for month in range(1, 13):
+        total_investment = Transakce.objects.filter(date__year=current_year, date__month=month).aggregate(Sum('amount'))['amount__sum'] or 0
+        investment_data.append(total_investment)
+
     context = {
         'total_akcie': total_akcie,
         'total_hodnota': total_hodnota,
@@ -433,6 +443,8 @@ def dashboard(request):
         'akcie_data': list(akcie_data),
         'transakce_monthly': list(transakce_monthly),
         'dividendy_data': list(dividendy_data),
+        'months': months,
+        'investment_data': investment_data,
         'query': query,
     }
     return render(request, 'akcie/dashboard.html', context)
@@ -490,17 +502,37 @@ def export_aktivity_pdf(request):
     return response
 
 def send_monthly_report():
-    subject = "Měsíční report investic"
-    body = "Přikládáme měsíční report vašich investic."
-    email = EmailMessage(
-        subject,
-        body,
-        'your_email@gmail.com',  # Odesílatel
-        ['recipient_email@gmail.com']  # Příjemce
-    )
+    users = CustomUser.objects.filter(receive_monthly_reports=True)
+    pdf_path = generate_pdf_report()  # Generování PDF reportu
+    for user in users:
+        subject = "Měsíční report investic"
+        body = f"Dobrý den, {user.username},\n\nPřikládáme měsíční report vašich investic."
+        email = EmailMessage(
+            subject,
+            body,
+            'your_email@gmail.com',  # Odesílatel
+            [user.email_for_reports]  # Příjemce
+        )
 
-    # Připojení PDF reportu
-    pdf_path = 'path_to_generated_report.pdf'  # Nahraďte skutečnou cestou k PDF
-    email.attach_file(pdf_path)
+        email.attach_file(pdf_path)
+        email.send()
 
-    email.send()
+def generate_pdf_report():
+    pdf_path = os.path.join('staticfiles', 'reports', 'monthly_report.pdf')
+    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+    c = canvas.Canvas(pdf_path)
+    c.drawString(100, 750, "Měsíční report investic")
+    c.drawString(100, 730, "Tento report obsahuje souhrn vašich investic za poslední měsíc.")
+    c.save()
+    return pdf_path
+
+@login_required
+def user_preferences(request):
+    if request.method == 'POST':
+        form = CustomUserForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = CustomUserForm(instance=request.user)
+    return render(request, 'akcie/user_preferences.html', {'form': form})

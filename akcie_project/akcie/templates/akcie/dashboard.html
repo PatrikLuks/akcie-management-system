@@ -38,6 +38,7 @@
 <canvas id="akcieChart" width="400" height="200"></canvas>
 <canvas id="investiceChart" width="400" height="200"></canvas>
 <canvas id="transakceMonthlyChart" width="400" height="200"></canvas>
+<canvas id="investmentTrends" width="400" height="200"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -169,6 +170,34 @@
                 scales: {
                     y: {
                         beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Graf investičních trendů
+        const investmentTrendsCtx = document.getElementById('investmentTrends').getContext('2d');
+        const investmentTrendsChart = new Chart(investmentTrendsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ months|safe }}, // Měsíce
+                datasets: [{
+                    label: 'Investiční trendy',
+                    data: {{ investment_data|safe }}, // Data investic
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Investiční trendy za poslední rok'
                     }
                 }
             }
