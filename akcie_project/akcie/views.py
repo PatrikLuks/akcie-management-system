@@ -1,7 +1,7 @@
 import csv
 import openpyxl
 from openpyxl.styles import Font
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
@@ -18,41 +18,59 @@ from django.urls import reverse
 from django.core.mail import EmailMessage
 from django.utils.timezone import now
 import os
+import zipfile
 from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser
 from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm
 
 def log_aktivita(akce, uzivatel=None):
+    """
+    Loguje uživatelské aktivity do databáze.
+    :param akce: Popis akce, která byla provedena.
+    :param uzivatel: Uživatelské jméno (volitelné).
+    """
     Aktivita.objects.create(akce=akce, uzivatel=uzivatel)
+
+# Přidání pomocné funkce pro filtrování akcií
+
+def filter_akcie(query):
+    """Filtruje akcie podle zadaného dotazu."""
+    return Akcie.objects.filter(
+        Q(nazev__icontains=query) |
+        Q(pocet_ks__icontains=query) |
+        Q(cena_za_kus__icontains=query)
+    )
 
 def index(request):
     return render(request, 'akcie/index.html')
 
 @login_required
 def akcie_list(request):
+    """
+    Zobrazuje seznam akcií s možností filtrování podle dotazu.
+    :param request: HTTP request objekt.
+    """
     query = request.GET.get('q')
-    if query:
-        akcie = Akcie.objects.filter(
-            Q(nazev__icontains=query) |
-            Q(pocet_ks__icontains=query) |
-            Q(cena_za_kus__icontains=query)
-        )
-    else:
-        akcie = Akcie.objects.all()
+    akcie = filter_akcie(query) if query else Akcie.objects.all()
     return render(request, 'akcie/akcie_list.html', {'akcie': akcie})
 
-def akcie_detail(request, pk):
-    akcie = get_object_or_404(Akcie, pk=pk)
+# Refaktorování akcie_detail
+
+def get_akcie_detail_context(akcie):
+    """Vrací kontext pro detail akcie."""
     transakce = Transakce.objects.filter(akcie=akcie)
     dividendy = Dividenda.objects.filter(akcie=akcie)
-
     total_dividendy = dividendy.aggregate(Sum('castka'))['castka__sum'] or 0
-
-    context = {
+    return {
         'akcie': akcie,
         'transakce': transakce,
         'dividendy': dividendy,
         'total_dividendy': total_dividendy,
     }
+
+def akcie_detail(request, pk):
+    """Zobrazuje detail akcie."""
+    akcie = get_object_or_404(Akcie, pk=pk)
+    context = get_akcie_detail_context(akcie)
     return render(request, 'akcie/akcie_detail.html', context)
 
 def akcie_create(request):
@@ -186,6 +204,14 @@ def export_akcie_csv(request):
 
     return response
 
+@login_required
+def export_akcie_json(request):
+    """
+    Exportuje data o akciích do JSON formátu.
+    """
+    akcie = Akcie.objects.all().values()
+    return JsonResponse(list(akcie), safe=False)
+
 def export_transakce_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="transakce.csv"'
@@ -210,6 +236,33 @@ def export_dividendy_csv(request):
     for d in dividendy:
         writer.writerow([d.akcie.nazev, d.datum, d.castka])
 
+    return response
+
+@login_required
+def export_all_data_zip(request):
+    """
+    Exportuje všechna data (akcie, transakce, dividendy) do jednoho ZIP souboru.
+    """
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zip_file:
+        # Export akcií
+        akcie_data = Akcie.objects.all().values()
+        akcie_csv = 'akcie.csv'
+        zip_file.writestr(akcie_csv, '\n'.join([','.join(map(str, row.values())) for row in akcie_data]))
+
+        # Export transakcí
+        transakce_data = Transakce.objects.all().values()
+        transakce_csv = 'transakce.csv'
+        zip_file.writestr(transakce_csv, '\n'.join([','.join(map(str, row.values())) for row in transakce_data]))
+
+        # Export dividend
+        dividendy_data = Dividenda.objects.all().values()
+        dividendy_csv = 'dividendy.csv'
+        zip_file.writestr(dividendy_csv, '\n'.join([','.join(map(str, row.values())) for row in dividendy_data]))
+
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="vsechna_data.zip"'
     return response
 
 def import_akcie_csv(request):

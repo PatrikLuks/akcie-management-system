@@ -3,6 +3,9 @@ from django.utils.timezone import now
 from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
+    """
+    Rozšířený uživatelský model s preferencemi pro měsíční reporty.
+    """
     receive_monthly_reports = models.BooleanField(default=False)
     email_for_reports = models.EmailField(null=True, blank=True)
 
@@ -10,6 +13,9 @@ class CustomUser(AbstractUser):
         swappable = 'AUTH_USER_MODEL'
 
 class Akcie(models.Model):
+    """
+    Model reprezentující akcie s detaily o počtu, ceně a zisku/ztrátě.
+    """
     nazev = models.CharField(max_length=100)
     pocet_ks = models.IntegerField()
     cena_za_kus = models.DecimalField(max_digits=10, decimal_places=2)

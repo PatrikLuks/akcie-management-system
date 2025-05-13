@@ -15,6 +15,7 @@ urlpatterns = [
     path('akcie/report/', views.generate_akcie_pdf, name='generate_akcie_pdf'),
     path('akcie/import_excel/', views.import_excel, name='import_excel'),
     path('akcie/export_excel/', views.export_excel, name='export_excel'),
+    path('akcie/export_json/', views.export_akcie_json, name='export_akcie_json'),
     path('transakce/', views.transakce_list, name='transakce_list'),
     path('transakce/<int:pk>/', views.transakce_detail, name='transakce_detail'),
     path('transakce/create/', views.transakce_create, name='transakce_create'),
@@ -38,4 +39,5 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='akcie/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('preferences/', user_preferences, name='user_preferences'),
+    path('export_all_data_zip/', views.export_all_data_zip, name='export_all_data_zip'),
 ]

@@ -6,7 +6,16 @@
     <button type="submit">Filtrovat</button>
 </form>
 
-<h1>Dashboard</h1>
+<div class="dashboard-container">
+    <h1>Dashboard</h1>
+    <div class="dashboard-section">
+        <button class="toggle-details">Zobrazit detaily</button>
+        <div class="details" style="display: none;">
+            <p>Detailní informace o transakcích...</p>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <h2>Počet akcií</h2>
     <p>{{ total_akcie }}</p>
@@ -204,4 +213,34 @@
         });
     });
 </script>
+
+<style>
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.dashboard-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+button.toggle-details {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button.toggle-details:hover {
+    background-color: #0056b3;
+}
+</style>
 {% endblock %}

@@ -1,15 +1,19 @@
+/* Modernizace stylů */
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
+    background-color: #f9f9f9;
     color: #333;
+    line-height: 1.6;
 }
 
 nav {
-    background-color: #333;
+    background-color: #007bff;
     color: #fff;
-    padding: 10px;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 nav ul {
@@ -17,6 +21,7 @@ nav ul {
     padding: 0;
     margin: 0;
     display: flex;
+    justify-content: space-around;
 }
 
 nav ul li {
@@ -26,11 +31,11 @@ nav ul li {
 nav ul li a {
     color: #fff;
     text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
 }
 
-/* Zvýraznění navigačních odkazů při najetí myší */
 nav ul li a:hover {
-    text-decoration: underline;
     color: #ffcc00;
 }
 
@@ -39,10 +44,24 @@ h1 {
 }
 
 form {
-    margin: 20px 0;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+form input, form select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
 form button {
+    width: 100%;
     background-color: #333;
     color: #fff;
     border: none;
@@ -92,16 +111,17 @@ table tr:hover {
 
 /* Tlačítka */
 button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
     border: none;
-    cursor: pointer;
+    padding: 10px 15px;
     border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
 }
 
 /* Přidání stínů a zaoblení pro karty */
