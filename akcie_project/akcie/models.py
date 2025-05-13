@@ -1,4 +1,13 @@
 from django.db import models
+from django.utils.timezone import now
+from django.contrib.auth.models import AbstractUser
+
+class CustomUser(AbstractUser):
+    receive_monthly_reports = models.BooleanField(default=False)
+    email_for_reports = models.EmailField(null=True, blank=True)
+
+    class Meta:
+        swappable = 'AUTH_USER_MODEL'
 
 class Akcie(models.Model):
     nazev = models.CharField(max_length=100)
@@ -29,3 +38,11 @@ class Dividenda(models.Model):
 
     def __str__(self):
         return f"Dividenda - {self.akcie.nazev}"
+
+class Aktivita(models.Model):
+    akce = models.CharField(max_length=255)
+    uzivatel = models.CharField(max_length=255, null=True, blank=True)
+    datum_cas = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"{self.akce} ({self.datum_cas})"

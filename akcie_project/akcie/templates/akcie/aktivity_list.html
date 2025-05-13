@@ -1,0 +1,66 @@
+{% extends 'akcie/base.html' %}
+
+{% block content %}
+<h1>Seznam aktivit</h1>
+
+<form method="get" action="">
+    <input type="text" name="user" placeholder="Hledat podle uživatele" value="{{ query_user|default_if_none:'' }}">
+    <input type="text" name="action" placeholder="Hledat podle akce" value="{{ query_action|default_if_none:'' }}">
+    <button type="submit">Filtrovat</button>
+</form>
+
+<a href="{% url 'export_aktivity_csv' %}" class="button">Exportovat do CSV</a>
+<a href="{% url 'export_aktivity_pdf' %}" class="button">Exportovat do PDF</a>
+
+<canvas id="aktivityChart" width="400" height="200"></canvas>
+
+<table>
+    <thead>
+        <tr>
+            <th>Akce</th>
+            <th>Uživatel</th>
+            <th>Datum a čas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for aktivita in aktivity %}
+        <tr>
+            <td>{{ aktivita.akce }}</td>
+            <td>{{ aktivita.uzivatel }}</td>
+            <td>{{ aktivita.datum_cas }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('aktivityChart').getContext('2d');
+
+        const data = {
+            labels: {% for aktivita in aktivity %}'{{ aktivita.akce }}',{% endfor %},
+            datasets: [{
+                label: 'Počet aktivit',
+                data: {% for aktivita in aktivity %}1,{% endfor %},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>

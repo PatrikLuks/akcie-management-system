@@ -1,15 +1,8 @@
-<h1>Importovat akcie z CSV</h1>
+{% block content %}
+<h1>Import dat z Excelu</h1>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <label for="csv_file">Vyberte CSV soubor:</label>
-    <input type="file" name="csv_file" id="csv_file" required>
+    <input type="file" name="excel_file" accept=".xlsx">
     <button type="submit">Importovat</button>
 </form>
-{% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-<a href="/akcie/">Zpět na seznam akcií</a>
+{% endblock %}

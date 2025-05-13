@@ -1,12 +1,26 @@
 import csv
-from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Font
+from django.http import HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
+from django.db.models.functions import TruncMonth
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 from django.contrib.auth.decorators import login_required
-from .models import Akcie, Transakce, Dividenda
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from io import BytesIO
+from django.urls import reverse
+from django.core.mail import EmailMessage
+from .models import Akcie, Transakce, Dividenda, Aktivita
 from .forms import AkcieForm, TransakceForm, DividendaForm
+
+def log_aktivita(akce, uzivatel=None):
+    Aktivita.objects.create(akce=akce, uzivatel=uzivatel)
 
 def index(request):
     return render(request, 'akcie/index.html')
@@ -25,8 +39,19 @@ def akcie_list(request):
     return render(request, 'akcie/akcie_list.html', {'akcie': akcie})
 
 def akcie_detail(request, pk):
-    akcie = Akcie.objects.get(pk=pk)
-    return render(request, 'akcie/akcie_detail.html', {'akcie': akcie})
+    akcie = get_object_or_404(Akcie, pk=pk)
+    transakce = Transakce.objects.filter(akcie=akcie)
+    dividendy = Dividenda.objects.filter(akcie=akcie)
+
+    total_dividendy = dividendy.aggregate(Sum('castka'))['castka__sum'] or 0
+
+    context = {
+        'akcie': akcie,
+        'transakce': transakce,
+        'dividendy': dividendy,
+        'total_dividendy': total_dividendy,
+    }
+    return render(request, 'akcie/akcie_detail.html', context)
 
 def akcie_create(request):
     if request.method == 'POST':
@@ -210,6 +235,61 @@ def import_akcie_csv(request):
 
     return render(request, 'akcie/import_form.html')
 
+def import_excel(request):
+    if request.method == 'POST' and request.FILES['excel_file']:
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file)
+        sheet = wb.active
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            Akcie.objects.create(
+                nazev=row[0],
+                pocet_ks=row[1],
+                cena_za_kus=row[2],
+                hodnota=row[3],
+                nakup=row[4],
+                zisk_ztrata=row[5],
+                dividenda=row[6]
+            )
+
+        log_aktivita("Import dat z Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
+
+        return redirect('akcie_list')
+
+    return render(request, 'akcie/import_form.html')
+
+def export_excel(request):
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="akcie_export.xlsx"'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Akcie"
+
+    # Přidání záhlaví
+    headers = ["Název", "Počet kusů", "Cena za kus", "Hodnota", "Nákup", "Zisk/Ztráta", "Dividenda"]
+    ws.append(headers)
+
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    # Přidání dat
+    for akcie in Akcie.objects.all():
+        ws.append([
+            akcie.nazev,
+            akcie.pocet_ks,
+            akcie.cena_za_kus,
+            akcie.hodnota,
+            akcie.nakup,
+            akcie.zisk_ztrata,
+            akcie.dividenda
+        ])
+
+    log_aktivita("Export dat do Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
+
+    wb.save(response)
+    return response
+
 def generate_akcie_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="akcie_report.pdf"'
@@ -266,3 +346,161 @@ def generate_dividenda_pdf(request):
     p.showPage()
     p.save()
     return response
+
+def export_dashboard_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="dashboard_report.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    p.setFont("Helvetica", 12)
+
+    p.drawString(100, 750, "Dashboard Report")
+
+    total_akcie = Akcie.objects.count()
+    total_transakce = Transakce.objects.count()
+    total_dividendy = Dividenda.objects.aggregate(Sum('castka'))['castka__sum'] or 0
+
+    p.drawString(100, 700, f"Počet akcií: {total_akcie}")
+    p.drawString(100, 680, f"Počet transakcí: {total_transakce}")
+    p.drawString(100, 660, f"Celková částka dividend: {total_dividendy} Kč")
+
+    p.showPage()
+    p.save()
+    return response
+
+def export_dashboard_graphs_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="dashboard_graphs.pdf"'
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    p.setFont("Helvetica", 12)
+
+    p.drawString(100, 750, "Dashboard Grafy")
+
+    # Screenshot grafů pomocí Selenium
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    try:
+        driver.get(request.build_absolute_uri(reverse('dashboard')))
+        driver.set_window_size(1200, 800)
+        screenshot = driver.get_screenshot_as_png()
+        image = ImageReader(BytesIO(screenshot))
+        p.drawImage(image, 50, 400, width=500, height=300)
+    finally:
+        driver.quit()
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='dashboard_graphs.pdf')
+
+def dashboard(request):
+    query = request.GET.get('q')
+
+    if query:
+        akcie = Akcie.objects.filter(Q(nazev__icontains=query))
+    else:
+        akcie = Akcie.objects.all()
+
+    total_akcie = akcie.count()
+    total_hodnota = akcie.aggregate(Sum('hodnota'))['hodnota__sum'] or 0
+    total_zisk_ztrata = akcie.aggregate(Sum('zisk_ztrata'))['zisk_ztrata__sum'] or 0
+
+    akcie_data = akcie.values('nazev', 'hodnota')
+
+    transakce_monthly = (
+        Transakce.objects.annotate(month=TruncMonth('datum'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+
+    dividendy_data = (
+        Dividenda.objects.values('akcie__nazev')
+        .annotate(total_castka=Sum('castka'))
+        .order_by('akcie__nazev')
+    )
+
+    context = {
+        'total_akcie': total_akcie,
+        'total_hodnota': total_hodnota,
+        'total_zisk_ztrata': total_zisk_ztrata,
+        'akcie_data': list(akcie_data),
+        'transakce_monthly': list(transakce_monthly),
+        'dividendy_data': list(dividendy_data),
+        'query': query,
+    }
+    return render(request, 'akcie/dashboard.html', context)
+
+def aktivity_list(request):
+    query_user = request.GET.get('user')
+    query_action = request.GET.get('action')
+
+    aktivity = Aktivita.objects.all()
+
+    if query_user:
+        aktivity = aktivity.filter(uzivatel__icontains=query_user)
+    if query_action:
+        aktivity = aktivity.filter(akce__icontains=query_action)
+
+    aktivity = aktivity.order_by('-datum_cas')
+
+    return render(request, 'akcie/aktivity_list.html', {
+        'aktivity': aktivity,
+        'query_user': query_user,
+        'query_action': query_action
+    })
+
+def export_aktivity_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="aktivity.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Akce', 'Uživatel', 'Datum a čas'])
+
+    for aktivita in Aktivita.objects.all():
+        writer.writerow([aktivita.akce, aktivita.uzivatel, aktivita.datum_cas])
+
+    return response
+
+def export_aktivity_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="aktivity_report.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    p.setFont("Helvetica", 12)
+
+    p.drawString(100, 750, "Seznam aktivit")
+
+    y = 720
+    for aktivita in Aktivita.objects.all():
+        p.drawString(100, y, f"Akce: {aktivita.akce}, Uživatel: {aktivita.uzivatel}, Datum a čas: {aktivita.datum_cas}")
+        y -= 20
+        if y < 50:
+            p.showPage()
+            p.setFont("Helvetica", 12)
+            y = 750
+
+    p.save()
+    return response
+
+def send_monthly_report():
+    subject = "Měsíční report investic"
+    body = "Přikládáme měsíční report vašich investic."
+    email = EmailMessage(
+        subject,
+        body,
+        'your_email@gmail.com',  # Odesílatel
+        ['recipient_email@gmail.com']  # Příjemce
+    )
+
+    # Připojení PDF reportu
+    pdf_path = 'path_to_generated_report.pdf'  # Nahraďte skutečnou cestou k PDF
+    email.attach_file(pdf_path)
+
+    email.send()

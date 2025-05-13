@@ -1,0 +1,178 @@
+{% extends 'akcie/base.html' %}
+
+{% block content %}
+<form method="get" action="">
+    <input type="text" name="q" placeholder="Hledat..." value="{{ query|default_if_none:'' }}">
+    <button type="submit">Filtrovat</button>
+</form>
+
+<h1>Dashboard</h1>
+<div class="card">
+    <h2>Počet akcií</h2>
+    <p>{{ total_akcie }}</p>
+</div>
+<div class="card">
+    <h2>Počet transakcí</h2>
+    <p>{{ total_transakce }}</p>
+</div>
+<div class="card">
+    <h2>Celková částka dividend</h2>
+    <p>{{ total_dividendy }} Kč</p>
+</div>
+
+<h2>Souhrnné statistiky</h2>
+<div class="card">
+    <h3>Celková hodnota investic</h3>
+    <p>{{ total_hodnota }} Kč</p>
+</div>
+<div class="card">
+    <h3>Celkový zisk/ztráta</h3>
+    <p>{{ total_zisk_ztrata }} Kč</p>
+</div>
+
+<a href="{% url 'export_dashboard_pdf' %}" class="button">Exportovat do PDF</a>
+<a href="{% url 'export_dashboard_graphs_pdf' %}" class="button">Exportovat grafy do PDF</a>
+
+<canvas id="dividendyChart" width="400" height="200"></canvas>
+<canvas id="transakceChart" width="400" height="200"></canvas>
+<canvas id="akcieChart" width="400" height="200"></canvas>
+<canvas id="investiceChart" width="400" height="200"></canvas>
+<canvas id="transakceMonthlyChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('dividendyChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Dividendy'],
+                datasets: [{
+                    label: 'Celková částka dividend',
+                    data: [{{ total_dividendy }}],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Graf pro transakce podle typu
+        const transakceCtx = document.getElementById('transakceChart').getContext('2d');
+        const transakceData = {
+            labels: {{ transakce_typy|map(attribute='typ')|join:","|safe }},
+            datasets: [{
+                label: 'Počet transakcí',
+                data: {{ transakce_typy|map(attribute='count')|join:","|safe }},
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        };
+        new Chart(transakceCtx, {
+            type: 'pie',
+            data: transakceData
+        });
+
+        // Graf pro akcie podle názvu
+        const akcieCtx = document.getElementById('akcieChart').getContext('2d');
+        const akcieData = {
+            labels: {{ akcie_pocet|map(attribute='nazev')|join:","|safe }},
+            datasets: [{
+                label: 'Počet akcií',
+                data: {{ akcie_pocet|map(attribute='count')|join:","|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+        new Chart(akcieCtx, {
+            type: 'bar',
+            data: akcieData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Graf rozložení investic podle akcií
+        const investiceCtx = document.getElementById('investiceChart').getContext('2d');
+        const investiceData = {
+            labels: [{% for akcie in akcie_data %}'{{ akcie.nazev }}',{% endfor %}],
+            datasets: [{
+                label: 'Hodnota investic',
+                data: [{% for akcie in akcie_data %}{{ akcie.hodnota }},{% endfor %}],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(investiceCtx, {
+            type: 'pie',
+            data: investiceData
+        });
+
+        // Graf měsíční přehled transakcí
+        const transakceMonthlyCtx = document.getElementById('transakceMonthlyChart').getContext('2d');
+        const transakceMonthlyData = {
+            labels: [{% for item in transakce_monthly %}'{{ item.month|date:"F Y" }}',{% endfor %}],
+            datasets: [{
+                label: 'Počet transakcí',
+                data: [{% for item in transakce_monthly %}{{ item.count }},{% endfor %}],
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(transakceMonthlyCtx, {
+            type: 'bar',
+            data: transakceMonthlyData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Graf přehled dividend podle jednotlivých akcií
+        const dividendyCtx = document.getElementById('dividendyChart').getContext('2d');
+        const dividendyData = {
+            labels: [{% for item in dividendy_data %}'{{ item.akcie__nazev }}',{% endfor %}],
+            datasets: [{
+                label: 'Celková částka dividend',
+                data: [{% for item in dividendy_data %}{{ item.total_castka }},{% endfor %}],
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(dividendyCtx, {
+            type: 'bar',
+            data: dividendyData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
