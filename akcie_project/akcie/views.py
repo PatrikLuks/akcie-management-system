@@ -92,6 +92,16 @@ def convert_to_czk(amount, from_currency):
         print(f"Chyba při převodu měny: {e}")
         return amount  # fallback: vrátí původní hodnotu
 
+def convert_to_czk_api(request):
+    try:
+        cena = float(request.GET.get('cena', 0))
+        mena = request.GET.get('mena', 'CZK')
+        from .views import convert_to_czk
+        czk = round(convert_to_czk(cena, mena), 2)
+        return JsonResponse({'czk': czk})
+    except Exception as e:
+        return JsonResponse({'czk': None, 'error': str(e)})
+
 @login_required
 def index(request):
     """

@@ -10,7 +10,19 @@
             if (data && data.length > 0) {
                 const cena = data[0].cena;
                 const mena = data[0].mena || data[0].currency || 'CZK';
-                document.getElementById('aktualni-cena-{{ ticker }}').innerText = `${cena} ${mena}`;
+                if (mena === 'CZK') {
+                    document.getElementById('aktualni-cena-{{ ticker }}').innerText = `${cena} Kč`;
+                } else {
+                    // Zobraz i cenu v CZK (přepočet přes backend by měl být dostupný v datech, pokud ne, zobraz pouze původní)
+                    fetch(`/akcie/convert_to_czk/?cena=${cena}&mena=${mena}`)
+                        .then(resp => resp.json())
+                        .then(res => {
+                            document.getElementById('aktualni-cena-{{ ticker }}').innerText = `${cena} ${mena} (~${res.czk} Kč)`;
+                        })
+                        .catch(() => {
+                            document.getElementById('aktualni-cena-{{ ticker }}').innerText = `${cena} ${mena}`;
+                        });
+                }
             } else {
                 document.getElementById('aktualni-cena-{{ ticker }}').innerText = 'N/A';
             }

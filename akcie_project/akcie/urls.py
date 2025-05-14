@@ -44,4 +44,5 @@ urlpatterns = [
     path('preferences/', user_preferences, name='user_preferences'),
     path('export_all_data_zip/', views.export_all_data_zip, name='export_all_data_zip'),
     path('export-hot-investments/', export_hot_investments_csv, name='export_hot_investments_csv'),
+    path('convert_to_czk/', views.convert_to_czk_api, name='convert_to_czk_api'),
 ]

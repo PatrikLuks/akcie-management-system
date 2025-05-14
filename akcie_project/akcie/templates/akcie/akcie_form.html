@@ -1,28 +1,37 @@
 <h1>Přidat akcii do portfolia</h1>
 <div class="stock-create-container">
   <div class="stock-search-box">
-    <input type="text" id="search-bar" placeholder="Vyhledat akcii (název nebo ticker)...">
-    <button id="search-button">Hledat</button>
+    <input type="text" id="search-bar" placeholder="Vyhledat akcii (název nebo ticker)..." aria-label="Vyhledat akcii">
+    <button id="search-button" aria-label="Hledat akcii">Hledat</button>
   </div>
   <div id="search-results"></div>
+  <div id="loading-spinner" style="display:none;text-align:center;margin:10px 0;">
+    <span>Načítání...</span>
+  </div>
   <form id="add-stock-form" method="post" style="display:none;">
     {% csrf_token %}
     <div>
       <label for="selected-stock">Vybraná akcie:</label>
-      <input type="text" id="selected-stock" name="nazev" readonly required>
+      <input type="text" id="selected-stock" name="nazev" readonly required aria-label="Vybraná akcie">
     </div>
     <div>
-      <label for="datum">Datum nákupu:</label>
-      <select id="datum" name="datum" required></select>
+      <label for="datum">Datum nákupu:
+        <span title="Datum, kdy jste akcii pořídili.">🛈</span>
+      </label>
+      <select id="datum" name="datum" required aria-label="Datum nákupu"></select>
     </div>
     <div>
-      <label for="cas">Čas nákupu:</label>
-      <input type="time" id="cas" name="cas" value="{{ form.cas.value|default:None }}">
+      <label for="cas">Čas nákupu:
+        <span title="Čas, kdy jste akcii pořídili. Nepovinné.">🛈</span>
+      </label>
+      <input type="time" id="cas" name="cas" value="{{ form.cas.value|default:None }}" aria-label="Čas nákupu">
       <small>(Nepovinné, pokud nevyplníte, použije se výchozí čas 00:00)</small>
     </div>
     <div>
-      <label for="pocet_ks">Počet kusů:</label>
-      <input type="number" id="pocet_ks" name="pocet_ks" min="1" required>
+      <label for="pocet_ks">Počet kusů:
+        <span title="Kolik kusů akcie jste koupili. Musí být celé číslo větší než 0.">🛈</span>
+      </label>
+      <input type="number" id="pocet_ks" name="pocet_ks" min="1" required aria-label="Počet kusů" oninput="if(this.value<1)this.value=1;">
     </div>
     <input type="hidden" id="ticker" name="ticker">
     <button type="submit">Přidat akcii</button>
@@ -44,10 +53,12 @@ searchBtn.addEventListener('click', function() {
     alert('Zadejte název nebo ticker akcie.');
     return;
   }
-  resultsDiv.innerHTML = 'Načítání...';
+  resultsDiv.innerHTML = '';
+  document.getElementById('loading-spinner').style.display = 'block';
   fetch(`/akcie/search/?q=${query}`)
     .then(response => response.json())
     .then(data => {
+      document.getElementById('loading-spinner').style.display = 'none';
       resultsDiv.innerHTML = '';
       if (data.length === 0) {
         resultsDiv.innerHTML = '<p>Žádné výsledky nenalezeny.</p>';
