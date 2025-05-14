@@ -1,9 +1,15 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Detail dividendy</h1>
-<p>Akcie: {{ dividenda.akcie.nazev }}</p>
-<p>Datum: {{ dividenda.datum }}</p>
-<p>Částka: {{ dividenda.castka }}</p>
-<a href="/dividendy/{{ dividenda.id }}/update/">Upravit</a>
-<a href="/dividendy/{{ dividenda.id }}/delete/">Smazat</a>
+<div class="card">
+  <h1 class="dashboard-title">Detail dividendy</h1>
+  <table class="premium-table">
+    <tr><th>Akcie</th><td>{{ dividenda.akcie.nazev }}</td></tr>
+    <tr><th>Datum</th><td>{{ dividenda.datum }}</td></tr>
+    <tr><th>Částka</th><td>{{ dividenda.castka }}</td></tr>
+  </table>
+  <div style="margin-top: 24px;">
+    <a href="/dividendy/{{ dividenda.id }}/update/" class="button">Upravit</a>
+    <a href="/dividendy/{{ dividenda.id }}/delete/" class="button button-attractive" style="margin-left: 12px;">Smazat</a>
+  </div>
+</div>
 {% endblock %}

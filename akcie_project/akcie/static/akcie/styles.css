@@ -1,173 +1,350 @@
-/* Modernizace stylů */
-
+/* Luxusní černá-zlatá-bílá paleta pro celý projekt */
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f9f9f9;
-    color: #333;
-    line-height: 1.6;
+    background: linear-gradient(135deg, #181818 0%, #232323 100%);
+    color: #fff;
+    min-height: 100vh;
 }
 
-/* Oprava stylů menu */
 nav {
-    background-color: #333; /* Dark background for contrast */
-    color: #000; /* Change text color to black */
-    padding: 10px;
+    background: #181818;
+    color: #fff;
+    padding: 10px 0;
+    border-bottom: 2px solid #bfa14a;
 }
-
 nav ul {
     list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
-}
-
-nav ul li {
-    margin-right: 15px;
-}
-
-nav ul li a {
-    color: #fff; /* Ensure links are also white */
-    text-decoration: none;
-    font-weight: bold;
-}
-
-nav ul li a:hover {
-    text-decoration: underline;
-}
-
-nav a {
-    color: #000 !important; /* Force links in the menu to have black text */
-    text-decoration: none;
-    margin-right: 15px;
-}
-
-nav a:hover {
-    text-decoration: underline;
-}
-
-h1 {
-    color: #444;
-}
-
-form {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-form input, form select {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-form button {
-    width: 100%;
-    background-color: #333;
-    color: #fff;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-}
-
-form button:hover {
-    background-color: #555;
-}
-
-a {
-    color: #333;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* Stylování tabulek */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 18px;
-    text-align: left;
-}
-
-table th, table td {
-    padding: 12px;
-    border: 1px solid #ddd;
-}
-
-table th {
-    background-color: #333;
-    color: white;
-}
-
-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-table tr:hover {
-    background-color: #ddd;
-}
-
-/* Tlačítka */
-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-/* Přidání stínů a zaoblení pro karty */
-.card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 20px;
-    margin: 20px 0;
-}
-
-/* Stylování pro seznam hot investic */
-
-ul {
-    list-style-type: none;
+    gap: 18px;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
     padding: 0;
+    background: none;
+    border: none;
+}
+nav ul li {
+    display: inline-block;
+}
+nav ul li a {
+    color: #fff !important;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-size: 1.08em;
+    padding: 8px 18px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+    background: none;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+nav ul li a:hover, nav ul li a.active {
+    color: #bfa14a !important;
+    background: #232323;
+    text-decoration: underline;
 }
 
-ul li {
-    background-color: #f9f9f9;
-    margin: 10px 0;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+h1, h2, h3, .dashboard-title {
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.01em;
 }
 
-ul li strong {
-    color: #007bff;
-    font-size: 1.2em;
+.card, .dashboard-card, .premium-akcie-detail, .dashboard-container {
+    background: #232323;
+    border-radius: 18px;
+    border: 1.5px solid #bfa14a;
+    box-shadow: 0 8px 32px rgba(191,161,74,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
+    color: #fff;
 }
 
-@media (max-width: 768px) {
-    .investment-item, .akcie-item {
-        flex-direction: column;
-        align-items: flex-start;
+.button, button, input[type="submit"] {
+    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
+    color: #181818 !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 12px 28px;
+    font-size: 1.08em;
+    box-shadow: 0 2px 8px rgba(191,161,74,0.13);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+.button:hover, button:hover, input[type="submit"]:hover {
+    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
+    color: #181818 !important;
+    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
+    transform: scale(1.04);
+}
+
+.button-attractive {
+    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
+    color: #181818 !important;
+    font-weight: 800;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
+    border: 2px solid #bfa14a;
+}
+.button-attractive:hover {
+    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
+    color: #181818 !important;
+}
+
+input, select, textarea {
+    border-radius: 7px;
+    border: 1.5px solid #bfa14a;
+    padding: 10px 12px;
+    font-size: 1em;
+    background: #181818;
+    color: #fff;
+    margin-bottom: 10px;
+}
+input:focus, select:focus, textarea:focus {
+    outline: 2.5px solid #bfa14a;
+    background: #232323;
+    color: #fff;
+}
+
+/* Luxusní tabulky */
+table, .premium-table {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #181818;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(191,161,74,0.04);
+}
+table th, .premium-table th {
+    background: #232323;
+    color: #bfa14a;
+    font-weight: 800;
+    border-bottom: 2px solid #bfa14a;
+}
+table td, .premium-table td {
+    padding: 13px 16px;
+    border: 1px solid #bfa14a;
+}
+table tr:nth-child(even), .premium-table tr:nth-child(even) {
+    background: #232323;
+}
+table tr:hover, .premium-table tr:hover {
+    background: #bfa14a;
+    color: #181818;
+}
+
+/* Luxusní notifikace */
+.notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
+    color: #181818;
+    padding: 16px 32px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
+    z-index: 9999;
+    animation: fadeIn 0.5s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; right: 0; }
+    to { opacity: 1; right: 24px; }
+}
+
+/* Luxusní box */
+.lux-gold-box {
+    position: relative;
+    border: 4px double #bfa14a;
+    box-shadow: 0 8px 32px rgba(191,161,74,0.18), 0 0 0 8px #232323, 0 0 0 12px #bfa14a;
+    background: repeating-linear-gradient(135deg, #181818 0 18px, #232323 18px 36px);
+    overflow: visible;
+    border: 3px solid #bfa14a;
+    border-radius: 18px;
+    background-image: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="0" width="4" height="40" fill="%23bfa14a" fill-opacity="0.08"/><rect x="0" y="18" width="40" height="4" fill="%23bfa14a" fill-opacity="0.08"/><circle cx="20" cy="20" r="8" stroke="%23bfa14a" stroke-width="1.2" fill="none" fill-opacity="0.08"/></svg>');
+    background-size: 40px 40px, auto;
+    background-blend-mode: lighten;
+    box-shadow: 0 4px 24px rgba(191,161,74,0.13);
+    padding: 24px 18px;
+    margin: 32px auto 36px auto;
+    max-width: 1100px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: center;
+    align-items: center;
+}
+.lux-gold-box::before, .lux-gold-box::after {
+    content: '';
+    position: absolute;
+    left: 18px; right: 18px;
+    height: 8px;
+    border-top: 2px solid #bfa14a;
+    border-bottom: 2px solid #bfa14a;
+    border-radius: 8px;
+    top: -16px;
+    background: linear-gradient(90deg, transparent 0%, #bfa14a 50%, transparent 100%);
+    z-index: 1;
+}
+.lux-gold-box::after {
+    top: auto;
+    bottom: -16px;
+}
+@media (max-width: 700px) {
+  .lux-gold-box {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 6px;
+  }
+}
+
+.lux-gold-box .button-attractive,
+.lux-gold-box .button-attractive:visited,
+.lux-gold-box .button-attractive:active,
+.lux-gold-box .button-attractive:focus {
+    background: #bfa14a !important;
+    color: #181818 !important;
+    border: 3.5px double #fffbe6 !important;
+    border-radius: 14px;
+    font-family: 'EB Garamond', 'Georgia', serif;
+    font-weight: 900;
+    font-size: 1.18em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 24px rgba(191,161,74,0.18), 0 0 0 2px #bfa14a;
+    padding: 14px 36px;
+    margin: 0 8px;
+    position: relative;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
+}
+.lux-gold-box .button-attractive:hover {
+    background: #fffbe6 !important;
+    color: #bfa14a !important;
+    border: 3.5px double #bfa14a !important;
+    box-shadow: 0 8px 32px rgba(191,161,74,0.22), 0 0 0 2px #fffbe6;
+}
+.lux-gold-box .lux-plus {
+    color: #bfa14a !important;
+    font-size: 1.35em;
+    font-weight: bold;
+    font-family: 'EB Garamond', 'Georgia', serif;
+    vertical-align: -2px;
+}
+/* Pilastry (vertikální ornamenty) */
+.lux-gold-box .button-attractive::before, .lux-gold-box .button-attractive::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 8px; bottom: 8px;
+    width: 4px;
     }
-    .details-link {
-        margin-top: 10px;
-    }
+}
+
+input:focus, select:focus, textarea:focus, .button:focus, button:focus {
+    outline: 2.5px solid #bfa14a;
+    outline-offset: 2px;
+    background: #232323;
+    color: #fff;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    background: #181818;
+}
+::-webkit-scrollbar-thumb {
+    background: #bfa14a;
+    border-radius: 8px;
+}
+
+/* Versailles motivy */
+.versailles-bg {
+    background: linear-gradient(135deg, #181818 0%, #232323 100%), url('https://www.transparenttextures.com/patterns/gold-fibers.png');
+    background-blend-mode: overlay;
+}
+.versailles-frame {
+    border: 6px double #bfa14a;
+    border-radius: 32px;
+    box-shadow: 0 8px 48px rgba(191,161,74,0.25), 0 2px 8px #181818;
+    background: linear-gradient(120deg, #232323 80%, #bfa14a 100%);
+    padding: 32px 28px;
+    margin: 36px auto;
+    max-width: 1200px;
+    position: relative;
+}
+.versailles-header {
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-size: 2.7em;
+    color: #bfa14a;
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 12px #fffbe6, 0 1px 0 #bfa14a;
+    margin-bottom: 18px;
+    text-align: center;
+    position: relative;
+}
+.versailles-ornament {
+    width: 80px;
+    height: 32px;
+    margin: 0 auto 18px auto;
+    background: url('https://svgshare.com/i/15kA.svg') no-repeat center/contain;
+    opacity: 0.85;
+}
+.versailles-divider {
+    border: none;
+    border-top: 3px double #bfa14a;
+    margin: 24px 0 32px 0;
+    height: 0;
+}
+.versailles-table {
+    background: #181818;
+    border: 3px solid #bfa14a;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(191,161,74,0.13);
+    color: #fff;
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-size: 1.13em;
+}
+.versailles-table th {
+    background: #232323;
+    color: #bfa14a;
+    font-size: 1.08em;
+    border-bottom: 2px solid #bfa14a;
+}
+.versailles-table td {
+    border: 1.5px solid #bfa14a;
+    padding: 13px 18px;
+}
+.versailles-btn {
+    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%) !important;
+    color: #181818 !important;
+    border: 3px solid #bfa14a !important;
+    border-radius: 16px;
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-weight: 900;
+    font-size: 1.18em;
+    letter-spacing: 0.06em;
+    box-shadow: 0 4px 24px rgba(191,161,74,0.18);
+    padding: 14px 36px;
+    margin: 8px 12px;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.versailles-btn:hover {
+    background: #bfa14a !important;
+    color: #fffbe6 !important;
+    box-shadow: 0 8px 32px rgba(191,161,74,0.22);
+}
+.versailles-shadow {
+    box-shadow: 0 8px 48px rgba(191,161,74,0.25), 0 2px 8px #181818;
+}
+.versailles-font {
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+
+body.versailles {
+    background: linear-gradient(135deg, #181818 0%, #232323 100%), url('https://www.transparenttextures.com/patterns/gold-fibers.png');
+    background-blend-mode: overlay;
 }

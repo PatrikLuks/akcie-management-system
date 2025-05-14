@@ -1,55 +1,40 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Seznam akcií</h1>
-
-<ul class="akcie-list">
-    {% for akcie in akcie %}
-        <li class="akcie-item">
-            <strong>{{ akcie.nazev }}</strong>
-            <span>Počet: {{ akcie.pocet_ks }}</span>
-            <span>Hodnota: {{ akcie.hodnota }} Kč</span>
-            <span>Zisk/Ztráta: {{ akcie.zisk_ztrata }} Kč</span>
-            <span>Nákupní cena za kus: {{ akcie.cena_za_kus }} Kč</span>
-            <span>Datum nákupu: {{ akcie.datum }}</span>
-            <span>Aktuální cena za kus: 
-                {% if akcie.ticker %}
-                    {% with ticker=akcie.ticker %}
-                        {% include 'akcie/partials/aktualni_cena.html' %}
-                    {% endwith %}
-                {% else %}
-                    (zobrazena v poli Hodnota)
-                {% endif %}
-            </span>
-            <a href="/akcie/{{ akcie.id }}/" class="details-link">Podrobnosti</a>
-        </li>
-    {% endfor %}
-</ul>
-<a href="/akcie/create/">Přidat novou akcii</a>
-<a href="/akcie/export/">Exportovat akcie do CSV</a>
-<a href="/akcie/import/">Importovat akcie z CSV</a>
-<a href="{% url 'export_excel' %}" class="button">Exportovat do Excelu</a>
-
-<style>
-.akcie-list {
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-}
-.akcie-item {
-    margin: 5px 0;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-}
-.details-link {
-    color: #007bff;
-    text-decoration: none;
-    margin-top: 5px;
-}
-.details-link:hover {
-    text-decoration: underline;
-}
-</style>
+<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Seznam akcií</h1>
+  <hr class="versailles-divider">
+  <div class="lux-gold-box versailles-frame versailles-shadow" style="background:none;">
+    <a href="/akcie/create/" class="versailles-btn"><span class="lux-plus">＋</span> Přidat novou akcii</a>
+    <a href="/akcie/export/" class="versailles-btn">Exportovat akcie do CSV</a>
+    <a href="/akcie/import/" class="versailles-btn">Importovat akcie z CSV</a>
+    <a href="{% url 'export_excel' %}" class="versailles-btn">Exportovat do Excelu</a>
+  </div>
+  <div class="dashboard-container">
+    <div class="dashboard-grid">
+      {% for akcie in akcie %}
+        <div class="versailles-frame versailles-shadow" style="background:none;">
+          <h2 class="versailles-header" style="font-size:1.2em;">{{ akcie.nazev }}</h2>
+          <table class="versailles-table" style="margin-bottom:12px;">
+            <tr><th>Počet</th><td>{{ akcie.pocet_ks }}</td></tr>
+            <tr><th>Hodnota</th><td>{{ akcie.hodnota }} Kč</td></tr>
+            <tr><th>Zisk/Ztráta</th><td>{{ akcie.zisk_ztrata }} Kč</td></tr>
+            <tr><th>Nákupní cena za kus</th><td>{{ akcie.cena_za_kus }} Kč</td></tr>
+            <tr><th>Datum nákupu</th><td>{{ akcie.datum }}</td></tr>
+            <tr><th>Aktuální cena za kus</th><td>
+              {% if akcie.ticker %}
+                {% with ticker=akcie.ticker %}
+                  {% include 'akcie/partials/aktualni_cena.html' %}
+                {% endwith %}
+              {% else %}
+                (zobrazena v poli Hodnota)
+              {% endif %}
+            </td></tr>
+          </table>
+          <a href="/akcie/{{ akcie.id }}/" class="versailles-btn" style="width:100%;margin-bottom:8px;">Podrobnosti</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}

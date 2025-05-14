@@ -4,20 +4,28 @@
 <head>
     <title>Akcie</title>
     <link rel="stylesheet" type="text/css" href="{% static 'akcie/styles.css' %}">
+    <meta name="theme-color" content="#bfa14a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#bfa14a">
+    <meta name="msapplication-navbutton-color" content="#bfa14a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
-    <nav>
-        <ul>
-            <li><a href="/">Domů</a></li>
-            <li><a href="/akcie/">Akcie</a></li>
-            <li><a href="/transakce/">Transakce</a></li>
-            <li><a href="/dividendy/">Dividendy</a></li>
-            <li><a href="/export-hot-investments/">Exportovat Hot Investice do CSV</a></li>
+<body class="versailles versailles-bg">
+    <nav class="versailles-frame versailles-shadow" style="margin-bottom: 0;">
+        <ul style="display: flex; gap: 32px; justify-content: center; align-items: center; list-style: none; padding: 18px 0; margin: 0;">
+            <li><a href="/" class="versailles-btn">Domů</a></li>
+            <li><a href="/akcie/" class="versailles-btn">Akcie</a></li>
+            <li><a href="/transakce/" class="versailles-btn">Transakce</a></li>
+            <li><a href="/dividendy/" class="versailles-btn">Dividendy</a></li>
+            <li><a href="/export-hot-investments/" class="versailles-btn">Exportovat Hot Investice do CSV</a></li>
         </ul>
     </nav>
-    <hr>
-    {% block content %}
-    {% endblock %}
+    <div class="versailles-ornament" style="margin: 0 auto 18px auto;"></div>
+    <hr class="versailles-divider">
+    <main class="versailles-frame versailles-shadow" style="margin-top: 0;">
+        {% block content %}
+        {% endblock %}
+    </main>
     <script src="/static/akcie/scripts.js"></script>
 </body>
 </html>

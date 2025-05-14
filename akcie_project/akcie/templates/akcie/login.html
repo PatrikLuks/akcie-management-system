@@ -1,10 +1,14 @@
 {% extends 'akcie/base.html' %}
 
 {% block content %}
-<h1>Přihlášení</h1>
-<form method="post">
+<div class="versailles-frame versailles-shadow" style="max-width: 500px; margin: 48px auto 0 auto;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header" style="text-align:center;">Přihlášení</h1>
+  <hr class="versailles-divider">
+  <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Přihlásit se</button>
-</form>
+    <button type="submit" class="versailles-btn" style="width:100%;margin-top:18px;">Přihlásit se</button>
+  </form>
+</div>
 {% endblock %}

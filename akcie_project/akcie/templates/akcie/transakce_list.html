@@ -1,17 +1,23 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Seznam transakcí</h1>
-
-<form method="get" action="">
+<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Seznam transakcí</h1>
+  <hr class="versailles-divider">
+  <form method="get" action="" class="versailles-frame versailles-shadow" style="max-width: 500px; margin: 0 auto 24px auto; background:none;">
     <input type="text" name="q" placeholder="Hledat...">
-    <button type="submit">Hledat</button>
-</form>
-
-<ul>
+    <button type="submit" class="versailles-btn">Hledat</button>
+  </form>
+  <ul style="padding:0;list-style:none;">
     {% for transakce in transakce %}
-        <li><a href="/transakce/{{ transakce.id }}/">{{ transakce.typ }} - {{ transakce.akcie.nazev }}</a></li>
+      <li class="versailles-frame versailles-shadow" style="margin-bottom:12px;">
+        <a href="/transakce/{{ transakce.id }}/" class="versailles-btn">{{ transakce.typ }} - {{ transakce.akcie.nazev }}</a>
+      </li>
     {% endfor %}
-</ul>
-<a href="/transakce/create/">Přidat novou transakci</a>
-<a href="/transakce/export/">Exportovat transakce do CSV</a>
+  </ul>
+  <div class="lux-flex-row">
+    <a href="/transakce/create/" class="versailles-btn"><span class="lux-plus">＋</span> Přidat novou transakci</a>
+    <a href="/transakce/export/" class="versailles-btn">Exportovat transakce do CSV</a>
+  </div>
+</div>
 {% endblock %}

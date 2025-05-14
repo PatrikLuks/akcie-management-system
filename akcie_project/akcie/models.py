@@ -3,6 +3,7 @@ from django.utils.timezone import now
 from django.contrib.auth.models import AbstractUser, User
 from django.conf import settings
 from django.contrib.auth import get_user_model
+import json
 
 def get_default_user():
     default_user = get_user_model().objects.first()
@@ -61,3 +62,84 @@ class Aktivita(models.Model):
 
     def __str__(self):
         return f"{self.akce} ({self.datum_cas})"
+
+class AuditLog(models.Model):
+    model_name = models.CharField(max_length=64)
+    object_id = models.PositiveIntegerField()
+    action = models.CharField(max_length=16)  # create, update, delete
+    changes = models.TextField(blank=True)  # JSON diff
+    user = models.ForeignKey(get_user_model(), null=True, blank=True, on_delete=models.SET_NULL)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.model_name} {self.object_id} {self.action} {self.timestamp}"
+
+# --- Audit logika pro Akcie, Transakce, Dividenda ---
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+def get_changes(instance, created):
+    data = {}
+    for field in instance._meta.fields:
+        data[field.name] = str(getattr(instance, field.name))
+    return json.dumps(data, ensure_ascii=False)
+
+@receiver(post_save, sender=Akcie)
+def audit_akcie_save(sender, instance, created, **kwargs):
+    AuditLog.objects.create(
+        model_name='Akcie',
+        object_id=instance.pk,
+        action='create' if created else 'update',
+        changes=get_changes(instance, created),
+        user=getattr(instance, 'user', None)
+    )
+
+@receiver(post_delete, sender=Akcie)
+def audit_akcie_delete(sender, instance, **kwargs):
+    AuditLog.objects.create(
+        model_name='Akcie',
+        object_id=instance.pk,
+        action='delete',
+        changes=get_changes(instance, False),
+        user=getattr(instance, 'user', None)
+    )
+
+@receiver(post_save, sender=Transakce)
+def audit_transakce_save(sender, instance, created, **kwargs):
+    AuditLog.objects.create(
+        model_name='Transakce',
+        object_id=instance.pk,
+        action='create' if created else 'update',
+        changes=get_changes(instance, created),
+        user=None
+    )
+
+@receiver(post_delete, sender=Transakce)
+def audit_transakce_delete(sender, instance, **kwargs):
+    AuditLog.objects.create(
+        model_name='Transakce',
+        object_id=instance.pk,
+        action='delete',
+        changes=get_changes(instance, False),
+        user=None
+    )
+
+@receiver(post_save, sender=Dividenda)
+def audit_dividenda_save(sender, instance, created, **kwargs):
+    AuditLog.objects.create(
+        model_name='Dividenda',
+        object_id=instance.pk,
+        action='create' if created else 'update',
+        changes=get_changes(instance, created),
+        user=None
+    )
+
+@receiver(post_delete, sender=Dividenda)
+def audit_dividenda_delete(sender, instance, **kwargs):
+    AuditLog.objects.create(
+        model_name='Dividenda',
+        object_id=instance.pk,
+        action='delete',
+        changes=get_changes(instance, False),
+        user=None
+    )

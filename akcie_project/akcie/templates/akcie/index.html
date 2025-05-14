@@ -1,21 +1,23 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<div class="dashboard-container">
-  <h1 class="dashboard-title">Přehled portfolia</h1>
+<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Přehled portfolia</h1>
+  <hr class="versailles-divider">
   <div class="dashboard-grid">
-    <div class="dashboard-card">
-      <h2>Vaše akcie</h2>
+    <div class="versailles-frame versailles-shadow" style="background: none;">
+      <h2 class="versailles-header" style="font-size:1.3em;">Vaše akcie</h2>
       <div id="user-stocks" class="stock-list">
         {% if user_stocks %}
-        <ul>
+        <ul style="padding:0;list-style:none;">
           {% for stock in user_stocks %}
-            <li class="stock-item">
+            <li class="stock-item lux-stock-item versailles-frame versailles-shadow" style="margin-bottom:18px;">
               <div>
                 <strong>{{ stock.nazev }}</strong><br>
                 <span class="stock-meta">{{ stock.cena_za_kus }} Kč/ks</span><br>
                 <span class="stock-meta">Hodnota: {{ stock.hodnota }} Kč</span>
               </div>
-              <a href="/akcie/{{ stock.id }}/" class="details-link">Podrobnosti</a>
+              <a href="/akcie/{{ stock.id }}/" class="versailles-btn">Podrobnosti</a>
             </li>
           {% endfor %}
         </ul>
@@ -24,24 +26,23 @@
         {% endif %}
       </div>
     </div>
-    <div class="dashboard-card">
-      <h2>Vývoj hodnoty portfolia</h2>
-      <p class="card-desc">Sledujte, jak se mění celková hodnota vašeho portfolia v čase.</p>
-      <canvas id="portfolioChart" height="80"></canvas>
+    <div class="versailles-frame versailles-shadow" style="background: none;">
+      <h2 class="versailles-header" style="font-size:1.3em;">Vývoj hodnoty portfolia</h2>
+      <p class="card-desc versailles-font">Sledujte, jak se mění celková hodnota vašeho portfolia v čase.</p>
+      <canvas id="portfolioChart" height="80" class="lux-chart versailles-frame"></canvas>
     </div>
-    <div class="dashboard-card">
-      <h2>Vývoj příjmů z dividend</h2>
-      <p class="card-desc">Přehled přijatých dividend v jednotlivých obdobích.</p>
-      <canvas id="dividendChart" height="80"></canvas>
+    <div class="versailles-frame versailles-shadow" style="background: none;">
+      <h2 class="versailles-header" style="font-size:1.3em;">Vývoj příjmů z dividend</h2>
+      <p class="card-desc versailles-font">Přehled přijatých dividend v jednotlivých obdobích.</p>
+      <canvas id="dividendChart" height="80" class="lux-chart versailles-frame"></canvas>
     </div>
-    <div class="dashboard-card">
-      <h2>Rozložení portfolia podle akcií</h2>
-      <p class="card-desc">Podíl jednotlivých akcií na celkové hodnotě portfolia.</p>
-      <canvas id="distributionChart" height="80"></canvas>
+    <div class="versailles-frame versailles-shadow" style="background: none;">
+      <h2 class="versailles-header" style="font-size:1.3em;">Rozložení portfolia podle akcií</h2>
+      <p class="card-desc versailles-font">Podíl jednotlivých akcií na celkové hodnotě portfolia.</p>
+      <canvas id="distributionChart" height="80" class="lux-chart versailles-frame"></canvas>
     </div>
   </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Vývoj hodnoty portfolia v čase
@@ -55,15 +56,15 @@ new Chart(ctx1, {
         datasets: [{
             label: 'Hodnota portfolia (Kč)',
             data: historyValues,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: '#bfa14a',
+            backgroundColor: 'rgba(191,161,74,0.15)',
             fill: true,
             tension: 0.2
         }]
     },
     options: {
-        responsive: true,
-        plugins: { legend: { display: false } }
+        plugins: { legend: { labels: { color: '#fffbe6' } } },
+        scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } }
     }
 });
 // Vývoj příjmů z dividend
@@ -75,19 +76,19 @@ new Chart(ctx2, {
     data: {
         labels: dividendLabels,
         datasets: [{
-            label: 'Příjmy z dividend (Kč)',
+            label: 'Dividendy',
             data: dividendValues,
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
+            backgroundColor: '#bfa14a',
+            borderColor: '#fffbe6',
+            borderWidth: 2
         }]
     },
     options: {
-        responsive: true,
-        plugins: { legend: { display: false } }
+        plugins: { legend: { labels: { color: '#fffbe6' } } },
+        scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } }
     }
 });
-// Rozložení portfolia podle akcií
+// Rozložení portfolia
 const distLabels = {{ dist_labels|safe }};
 const distValues = {{ dist_values|safe }};
 const ctx3 = document.getElementById('distributionChart').getContext('2d');
@@ -96,20 +97,16 @@ new Chart(ctx3, {
     data: {
         labels: distLabels,
         datasets: [{
-            label: 'Rozložení portfolia',
             data: distValues,
             backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-                'rgba(255, 159, 64, 0.6)'
-            ]
+                '#bfa14a', '#fffbe6', '#232323', '#181818', '#fff', '#000'
+            ],
+            borderColor: '#fffbe6',
+            borderWidth: 2
         }]
     },
     options: {
-        responsive: true
+        plugins: { legend: { labels: { color: '#fffbe6' } } }
     }
 });
 </script>
@@ -124,7 +121,7 @@ new Chart(ctx3, {
   text-align: center;
   margin-bottom: 30px;
   font-size: 2.2em;
-  color: #007bff;
+  color: #bfa14a;
 }
 .dashboard-grid {
   display: grid;
@@ -132,17 +129,18 @@ new Chart(ctx3, {
   gap: 30px;
 }
 .dashboard-card {
-  background: #fff;
+  background: #181818;
   border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  box-shadow: 0 4px 16px rgba(191,161,74,0.07);
   padding: 24px 18px 18px 18px;
   min-height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  border: 1.5px solid #bfa14a;
 }
 .card-desc {
-  color: #666;
+  color: #fffbe6;
   font-size: 0.98em;
   margin-bottom: 10px;
 }
@@ -154,23 +152,21 @@ new Chart(ctx3, {
 .stock-item {
   margin: 10px 0;
   padding: 12px 10px;
-  border: 1px solid #eee;
   border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background-color: #f9f9f9;
   transition: box-shadow 0.2s;
 }
 .stock-item:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(191,161,74,0.08);
 }
 .stock-meta {
-  color: #888;
+  color: #fffbe6;
   font-size: 0.95em;
 }
 .details-link {
-  color: #007bff;
+  color: #bfa14a;
   text-decoration: none;
   font-weight: bold;
   margin-left: 10px;
@@ -180,16 +176,40 @@ new Chart(ctx3, {
 }
 canvas {
   margin: 20px 0 10px 0;
-  background: #fff;
+  background: #181818;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 4px rgba(191,161,74,0.07);
   padding: 10px;
   max-width: 100%;
+  border: 2px solid #bfa14a;
 }
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+}
+.lux-dashboard {
+  background: linear-gradient(135deg, #181818 0%, #232323 100%);
+  color: #fff;
+}
+.lux-stock-item {
+  background: #181818;
+  border: 1.5px solid #bfa14a;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  padding: 12px 18px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(191,161,74,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lux-stock-item strong { color: #bfa14a; font-size: 1.1em; }
+.lux-chart {
+  background: #181818;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(191,161,74,0.13);
+  border: 2px solid #bfa14a;
 }
 </style>
 {% endblock %}

@@ -7,6 +7,7 @@ from unittest.mock import patch
 from .views import fetch_akcie_data, fetch_hot_investments
 import yfinance as yf
 from datetime import date
+from django.contrib.auth.models import Group
 
 class AkcieModelTest(TestCase):
     def setUp(self):
@@ -164,6 +165,7 @@ class AuthenticationTest(TestCase):
 class AkcieCRUDTest(TestCase):
     def setUp(self):
         self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
+        self.user.groups.add(Group.objects.get_or_create(name='Admin')[0])
         self.client.login(username='testuser', password='testpassword')
         self.akcie = Akcie.objects.create(
             nazev="Testovací akcie",

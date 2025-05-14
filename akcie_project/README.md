@@ -45,6 +45,14 @@ Tento projekt je webová aplikace pro správu investic do akcií. Umožňuje už
   python manage.py runcrons
   ```
 
+## API dokumentace
+
+- `/api/akcie/` - GET - seznam všech akcií (JSON)
+- `/api/transakce/` - GET - seznam všech transakcí (JSON)
+- `/api/dividendy/` - GET - seznam všech dividend (JSON)
+- `/health/` - GET - health check endpoint (JSON)
+- `/auditlog/` - pouze pro adminy, zobrazení auditních logů
+
 ## Požadavky
 - Python 3.9+
 - Django 4.0+
@@ -105,6 +113,30 @@ Tento projekt je webová aplikace pro správu investic do akcií. Umožňuje už
      ```bash
      python manage.py runcrons
      ```
+
+3. Spuštění všech testů:
+   ```bash
+   python manage.py test akcie
+   ```
+
+## Monitoring
+
+- Health check endpoint: `/health/`
+- Auditní logy: `/auditlog/`
+
+## Luxusní exporty
+
+- CSV, Excel, PDF exporty obsahují branding, vodoznak a detailní rozpisy.
+
+## Role-based access
+
+- Admin: plný přístup
+- Poradce: CRUD bez mazání
+- Klient: pouze čtení
+
+## Další
+
+- Pro detailní audit a historii změn sledujte sekci Auditlog v aplikaci nebo v adminu.
 
 ## Nasazení
 

@@ -1,11 +1,17 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Detail transakce</h1>
-<p>Typ: {{ transakce.typ }}</p>
-<p>Akcie: {{ transakce.akcie.nazev }}</p>
-<p>Datum: {{ transakce.datum }}</p>
-<p>Množství: {{ transakce.mnozstvi }}</p>
-<p>Cena: {{ transakce.cena }}</p>
-<a href="/transakce/{{ transakce.id }}/update/">Upravit</a>
-<a href="/transakce/{{ transakce.id }}/delete/">Smazat</a>
+<div class="card">
+  <h1 class="dashboard-title">Detail transakce</h1>
+  <table class="premium-table">
+    <tr><th>Typ</th><td>{{ transakce.typ }}</td></tr>
+    <tr><th>Akcie</th><td>{{ transakce.akcie.nazev }}</td></tr>
+    <tr><th>Datum</th><td>{{ transakce.datum }}</td></tr>
+    <tr><th>Množství</th><td>{{ transakce.mnozstvi }}</td></tr>
+    <tr><th>Cena</th><td>{{ transakce.cena }}</td></tr>
+  </table>
+  <div style="margin-top: 24px;">
+    <a href="/transakce/{{ transakce.id }}/update/" class="button">Upravit</a>
+    <a href="/transakce/{{ transakce.id }}/delete/" class="button button-attractive" style="margin-left: 12px;">Smazat</a>
+  </div>
+</div>
 {% endblock %}

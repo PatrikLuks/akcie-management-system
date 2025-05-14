@@ -1,7 +1,18 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.http import JsonResponse
+from django.views import View
 from . import views
-from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock, history_dates
+from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock, history_dates, auditlog_list
+
+class HealthCheckView(View):
+    def get(self, request):
+        from django.db import connection
+        try:
+            connection.ensure_connection()
+            return JsonResponse({'status': 'ok', 'db': 'ok'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'db': str(e)}, status=500)
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -45,4 +56,9 @@ urlpatterns = [
     path('export_all_data_zip/', views.export_all_data_zip, name='export_all_data_zip'),
     path('export-hot-investments/', export_hot_investments_csv, name='export_hot_investments_csv'),
     path('convert_to_czk/', views.convert_to_czk_api, name='convert_to_czk_api'),
+    path('api/akcie/', views.api_akcie_list, name='api_akcie_list'),
+    path('api/transakce/', views.api_transakce_list, name='api_transakce_list'),
+    path('api/dividendy/', views.api_dividenda_list, name='api_dividenda_list'),
+    path('health/', HealthCheckView.as_view(), name='health'),
+    path('auditlog/', auditlog_list, name='auditlog_list'),
 ]

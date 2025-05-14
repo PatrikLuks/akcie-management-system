@@ -1,35 +1,39 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<div class="dashboard-container">
-  <h1 class="dashboard-title">Dividendy – přehled a analýza</h1>
+<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Dividendy – přehled a analýza</h1>
+  <hr class="versailles-divider">
   <div class="dashboard-grid">
-    <div class="dashboard-card">
-      <h2>Souhrnné statistiky</h2>
-      <ul class="stats-list">
+    <div class="versailles-frame versailles-shadow" style="background:none;">
+      <h2 class="versailles-header" style="font-size:1.2em;">Souhrnné statistiky</h2>
+      <ul class="stats-list versailles-font">
         <li><strong>Celkový příjem z dividend:</strong> {{ total_dividendy|floatformat:2 }} Kč</li>
         <li><strong>Průměrná dividenda:</strong> {{ avg_dividenda|floatformat:2 }} Kč</li>
         <li><strong>Počet výplat:</strong> {{ count_dividendy }}</li>
         <li><strong>Nejbližší výplata:</strong> {% if nejblizsi_vyplata %}{{ nejblizsi_vyplata }} ({{ nejblizsi_castka|floatformat:2 }} Kč){% else %}–{% endif %}</li>
       </ul>
-      <a href="/dividendy/export/" class="button">Exportovat dividendy do CSV</a>
-      <a href="/dividendy/create/" class="button">Přidat novou dividendu</a>
+      <div class="lux-flex-row" style="margin-top: 18px;">
+        <a href="/dividendy/export/" class="versailles-btn">Exportovat dividendy do CSV</a>
+        <a href="/dividendy/create/" class="versailles-btn"><span class="lux-plus">＋</span> Přidat novou dividendu</a>
+      </div>
     </div>
-    <div class="dashboard-card">
-      <h2>Vývoj příjmů z dividend</h2>
-      <canvas id="timelineChart" height="80"></canvas>
+    <div class="versailles-frame versailles-shadow" style="background:none;">
+      <h2 class="versailles-header" style="font-size:1.2em;">Vývoj příjmů z dividend</h2>
+      <canvas id="timelineChart" height="80" class="lux-chart versailles-frame"></canvas>
     </div>
-    <div class="dashboard-card">
-      <h2>Rozložení dividend podle akcií</h2>
-      <canvas id="rozlozeniChart" height="80"></canvas>
+    <div class="versailles-frame versailles-shadow" style="background:none;">
+      <h2 class="versailles-header" style="font-size:1.2em;">Rozložení dividend podle akcií</h2>
+      <canvas id="rozlozeniChart" height="80" class="lux-chart versailles-frame"></canvas>
     </div>
-    <div class="dashboard-card">
-      <h2>Tabulka dividend</h2>
+    <div class="versailles-frame versailles-shadow" style="background:none;">
+      <h2 class="versailles-header" style="font-size:1.2em;">Tabulka dividend</h2>
       <form method="get" action="" style="margin-bottom:10px;">
         <input type="text" name="q" placeholder="Hledat..." value="{{ request.GET.q }}">
-        <button type="submit">Hledat</button>
+        <button type="submit" class="versailles-btn">Hledat</button>
       </form>
       <div class="table-scroll">
-        <table class="dividendy-table">
+        <table class="versailles-table">
           <thead>
             <tr>
               <th>Akcie</th>
@@ -45,9 +49,9 @@
               <td>{{ dividenda.datum }}</td>
               <td>{{ dividenda.castka|floatformat:2 }}</td>
               <td>
-                <a href="/dividendy/{{ dividenda.id }}/">Detail</a> |
-                <a href="/dividendy/{{ dividenda.id }}/update/">Upravit</a> |
-                <a href="/dividendy/{{ dividenda.id }}/delete/">Smazat</a>
+                <a href="/dividendy/{{ dividenda.id }}/" class="versailles-btn">Detail</a> |
+                <a href="/dividendy/{{ dividenda.id }}/update/" class="versailles-btn">Upravit</a> |
+                <a href="/dividendy/{{ dividenda.id }}/delete/" class="versailles-btn">Smazat</a>
               </td>
             </tr>
             {% endfor %}
@@ -56,10 +60,8 @@
       </div>
     </div>
   </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
 const timelineLabels = {{ timeline_labels|safe }};
 const timelineValues = {{ timeline_values|safe }};
 const ctx1 = document.getElementById('timelineChart').getContext('2d');
@@ -100,81 +102,5 @@ new Chart(ctx2, {
     options: {responsive: true}
 });
 </script>
-
-<style>
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 10px 10px 10px;
-}
-.dashboard-title {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 2.2em;
-  color: #007bff;
-}
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 30px;
-}
-.dashboard-card {
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-  padding: 24px 18px 18px 18px;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-.stats-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 15px 0;
-}
-.stats-list li {
-  margin-bottom: 7px;
-}
-.button {
-  display: inline-block;
-  margin: 5px 7px 0 0;
-  padding: 7px 16px;
-  background: #007bff;
-  color: #fff;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1em;
-  transition: background 0.2s;
-}
-.button:hover {
-  background: #0056b3;
-}
-.table-scroll {
-  overflow-x: auto;
-}
-.dividendy-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-.dividendy-table th, .dividendy-table td {
-  border: 1px solid #eee;
-  padding: 7px 10px;
-  text-align: left;
-}
-.dividendy-table th {
-  background: #f4f4f9;
-}
-.future-dividend {
-  background: #e6f7ff;
-  font-weight: bold;
-}
-@media (max-width: 900px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+</div>
 {% endblock %}

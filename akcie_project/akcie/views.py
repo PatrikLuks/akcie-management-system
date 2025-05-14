@@ -9,7 +9,7 @@ from django.db.models.functions import TruncMonth
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -22,11 +22,51 @@ import os
 import zipfile
 import requests
 import yfinance as yf
-from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser
+from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser, AuditLog
 from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm
+from .utils_pdf import add_luxury_branding
+from functools import wraps
+from django.views.decorators.csrf import csrf_exempt
 
 API_URL = 'https://example.com/api/akcie'  # Nahraďte skutečnou URL API
 TREND_API_URL = 'https://api.example.com/trends'  # Skutečná URL API
+
+# --- Role-based access utility dekorátory ---
+def is_admin(user):
+    return user.groups.filter(name='Admin').exists() or user.is_superuser
+
+def is_poradce(user):
+    return user.groups.filter(name='Poradce').exists()
+
+def is_klient(user):
+    return user.groups.filter(name='Klient').exists()
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not is_admin(request.user):
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden('Přístup pouze pro administrátory.')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def poradce_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not (is_admin(request.user) or is_poradce(request.user)):
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden('Přístup pouze pro poradce.')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def klient_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not (is_admin(request.user) or is_poradce(request.user) or is_klient(request.user)):
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden('Přístup pouze pro klienty.')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 def fetch_akcie_data():
     """
@@ -230,6 +270,7 @@ def akcie_detail(request, pk):
     return render(request, 'akcie/akcie_detail.html', context)
 
 @login_required
+@poradce_required
 def akcie_create(request):
     if request.method == 'POST':
         ticker = request.POST.get('ticker')
@@ -292,6 +333,8 @@ def akcie_create(request):
         form = AkcieForm()
     return render(request, 'akcie/akcie_form.html', {'form': form})
 
+@login_required
+@poradce_required
 def akcie_update(request, pk):
     akcie = get_object_or_404(Akcie, pk=pk)
     if request.method == 'POST':
@@ -303,6 +346,8 @@ def akcie_update(request, pk):
         form = AkcieForm(instance=akcie)
     return render(request, 'akcie/akcie_form.html', {'form': form})
 
+@login_required
+@admin_required
 def akcie_delete(request, pk):
     akcie = get_object_or_404(Akcie, pk=pk)
     if request.method == 'POST':
@@ -329,6 +374,7 @@ def transakce_detail(request, pk):
     return render(request, 'akcie/transakce_detail.html', {'transakce': transakce})
 
 @login_required
+@poradce_required
 def transakce_create(request):
     """
     Vytvoření nové transakce s daty z API.
@@ -353,6 +399,8 @@ def transakce_create(request):
         form = TransakceForm()
     return render(request, 'akcie/transakce_form.html', {'form': form, 'akcie_data': akcie_data})
 
+@login_required
+@poradce_required
 def transakce_update(request, pk):
     transakce = get_object_or_404(Transakce, pk=pk)
     if request.method == 'POST':
@@ -364,6 +412,8 @@ def transakce_update(request, pk):
         form = TransakceForm(instance=transakce)
     return render(request, 'akcie/transakce_form.html', {'form': form})
 
+@login_required
+@admin_required
 def transakce_delete(request, pk):
     transakce = get_object_or_404(Transakce, pk=pk)
     if request.method == 'POST':
@@ -433,6 +483,8 @@ def dividenda_detail(request, pk):
     dividenda = Dividenda.objects.get(pk=pk)
     return render(request, 'akcie/dividenda_detail.html', {'dividenda': dividenda})
 
+@login_required
+@poradce_required
 def dividenda_create(request):
     if request.method == 'POST':
         form = DividendaForm(request.POST)
@@ -443,6 +495,8 @@ def dividenda_create(request):
         form = DividendaForm()
     return render(request, 'akcie/dividenda_form.html', {'form': form})
 
+@login_required
+@poradce_required
 def dividenda_update(request, pk):
     dividenda = get_object_or_404(Dividenda, pk=pk)
     if request.method == 'POST':
@@ -454,6 +508,8 @@ def dividenda_update(request, pk):
         form = DividendaForm(instance=dividenda)
     return render(request, 'akcie/dividenda_form.html', {'form': form})
 
+@login_required
+@admin_required
 def dividenda_delete(request, pk):
     dividenda = get_object_or_404(Dividenda, pk=pk)
     if request.method == 'POST':
@@ -470,8 +526,19 @@ def export_akcie_csv(request):
 
     akcie = Akcie.objects.all()
     for a in akcie:
-        writer.writerow([a.nazev, a.pocet_ks, a.cena_za_kus, a.hodnota, a.nakup, a.zisk_ztrata, a.dividenda])
+        writer.writerow([
+            a.nazev,
+            a.pocet_ks,
+            f"{a.cena_za_kus:,.2f} Kč",
+            f"{a.hodnota:,.2f} Kč",
+            f"{a.nakup:,.2f} Kč",
+            f"{a.zisk_ztrata:,.2f} Kč",
+            f"{a.dividenda:,.2f} Kč"
+        ])
 
+    # Luxusní podpis a vodoznak
+    writer.writerow([])
+    writer.writerow(["--- Luxusní export pro Finanční Poradce Premium ---"])
     return response
 
 @login_required
@@ -594,24 +661,27 @@ def export_excel(request):
     # Přidání záhlaví
     headers = ["Název", "Počet kusů", "Cena za kus", "Hodnota", "Nákup", "Zisk/Ztráta", "Dividenda"]
     ws.append(headers)
-
     for cell in ws[1]:
-        cell.font = Font(bold=True)
+        cell.font = Font(bold=True, color="007bff")
+    ws.sheet_properties.tabColor = "007bff"
 
     # Přidání dat
     for akcie in Akcie.objects.all():
         ws.append([
             akcie.nazev,
             akcie.pocet_ks,
-            akcie.cena_za_kus,
-            akcie.hodnota,
-            akcie.nakup,
-            akcie.zisk_ztrata,
-            akcie.dividenda
+            float(akcie.cena_za_kus),
+            float(akcie.hodnota),
+            float(akcie.nakup),
+            float(akcie.zisk_ztrata),
+            float(akcie.dividenda)
         ])
 
-    log_aktivita("Export dat do Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
+    # Luxusní branding
+    ws.append([])
+    ws.append(["--- Luxusní export pro Finanční Poradce Premium ---"])
 
+    log_aktivita("Export dat do Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
     wb.save(response)
     return response
 
@@ -620,16 +690,20 @@ def generate_akcie_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="akcie_report.pdf"'
 
     p = canvas.Canvas(response)
+    add_luxury_branding(p)
     p.setFont("Helvetica", 12)
-
     p.drawString(100, 800, "Report o akciích")
     y = 780
 
     akcie = Akcie.objects.all()
     for a in akcie:
-        p.drawString(100, y, f"Název: {a.nazev}, Počet kusů: {a.pocet_ks}, Cena za kus: {a.cena_za_kus}")
+        p.drawString(100, y, f"Název: {a.nazev}, Počet kusů: {a.pocet_ks}, Cena za kus: {a.cena_za_kus:,.2f} Kč, Hodnota: {a.hodnota:,.2f} Kč, Zisk/Ztráta: {a.zisk_ztrata:,.2f} Kč, Dividenda: {a.dividenda:,.2f} Kč")
         y -= 20
-
+        if y < 50:
+            p.showPage()
+            add_luxury_branding(p)
+            p.setFont("Helvetica", 12)
+            y = 800
     p.showPage()
     p.save()
     return response
@@ -677,6 +751,7 @@ def export_dashboard_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="dashboard_report.pdf"'
 
     p = canvas.Canvas(response, pagesize=letter)
+    add_luxury_branding(p)
     p.setFont("Helvetica", 12)
 
     p.drawString(100, 750, "Dashboard Report")
@@ -824,6 +899,12 @@ def export_aktivity_pdf(request):
     p.save()
     return response
 
+@login_required
+@admin_required
+def auditlog_list(request):
+    logs = AuditLog.objects.order_by('-timestamp')[:200]
+    return render(request, 'akcie/auditlog_list.html', {'logs': logs})
+
 def send_monthly_report():
     users = CustomUser.objects.filter(receive_monthly_reports=True)
     pdf_path = generate_pdf_report()  # Generování PDF reportu
@@ -943,3 +1024,36 @@ def history_dates(request):
     except Exception as e:
         print(f"Chyba při získávání historických dat: {e}")
         return JsonResponse([], safe=False)
+
+@user_passes_test(is_admin)
+def admin_only_view(request):
+    # ... pouze pro adminy ...
+    pass
+
+@user_passes_test(is_poradce)
+def poradce_only_view(request):
+    # ... pouze pro poradce ...
+    pass
+
+@user_passes_test(is_klient)
+def klient_only_view(request):
+    # ... pouze pro klienty ...
+    pass
+
+@csrf_exempt
+def api_akcie_list(request):
+    if request.method == 'GET':
+        data = list(Akcie.objects.values())
+        return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def api_transakce_list(request):
+    if request.method == 'GET':
+        data = list(Transakce.objects.values())
+        return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def api_dividenda_list(request):
+    if request.method == 'GET':
+        data = list(Dividenda.objects.values())
+        return JsonResponse(data, safe=False)
