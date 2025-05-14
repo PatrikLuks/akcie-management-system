@@ -1,33 +1,46 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Vítejte na Akcie Management Systému</h1>
-<p>Spravujte své investice efektivně a přehledně.</p>
-
-<h2>Vaše vybrané akcie</h2>
-<div id="user-stocks" class="stock-list">
-    {% if user_stocks %}
-    <ul>
-      {% for stock in user_stocks %}
-        <li class="stock-item">
-          <strong>{{ stock.nazev }}</strong>: {{ stock.cena_za_kus }} Kč/ks, Hodnota: {{ stock.hodnota }} Kč
-          <a href="/akcie/{{ stock.id }}/" class="details-link">Podrobnosti</a>
-        </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p>Nemáte žádné vybrané akcie.</p>
-    {% endif %}
+<div class="dashboard-container">
+  <h1 class="dashboard-title">Přehled portfolia</h1>
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <h2>Vaše akcie</h2>
+      <div id="user-stocks" class="stock-list">
+        {% if user_stocks %}
+        <ul>
+          {% for stock in user_stocks %}
+            <li class="stock-item">
+              <div>
+                <strong>{{ stock.nazev }}</strong><br>
+                <span class="stock-meta">{{ stock.cena_za_kus }} Kč/ks</span><br>
+                <span class="stock-meta">Hodnota: {{ stock.hodnota }} Kč</span>
+              </div>
+              <a href="/akcie/{{ stock.id }}/" class="details-link">Podrobnosti</a>
+            </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>Nemáte žádné vybrané akcie.</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="dashboard-card">
+      <h2>Vývoj hodnoty portfolia</h2>
+      <p class="card-desc">Sledujte, jak se mění celková hodnota vašeho portfolia v čase.</p>
+      <canvas id="portfolioChart" height="80"></canvas>
+    </div>
+    <div class="dashboard-card">
+      <h2>Vývoj příjmů z dividend</h2>
+      <p class="card-desc">Přehled přijatých dividend v jednotlivých obdobích.</p>
+      <canvas id="dividendChart" height="80"></canvas>
+    </div>
+    <div class="dashboard-card">
+      <h2>Rozložení portfolia podle akcií</h2>
+      <p class="card-desc">Podíl jednotlivých akcií na celkové hodnotě portfolia.</p>
+      <canvas id="distributionChart" height="80"></canvas>
+    </div>
+  </div>
 </div>
-
-<hr>
-<h2>Vývoj hodnoty portfolia v čase</h2>
-<canvas id="portfolioChart" height="80"></canvas>
-
-<h2>Vývoj příjmů z dividend</h2>
-<canvas id="dividendChart" height="80"></canvas>
-
-<h2>Rozložení portfolia podle akcií</h2>
-<canvas id="distributionChart" height="80"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -102,53 +115,81 @@ new Chart(ctx3, {
 </script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    color: #333;
-    margin: 0;
-    padding: 0;
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 10px 10px 10px;
 }
-header {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
+.dashboard-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.2em;
+  color: #007bff;
 }
-.stock-list {
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 20px auto;
-    max-width: 800px;
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 30px;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  padding: 24px 18px 18px 18px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.card-desc {
+  color: #666;
+  font-size: 0.98em;
+  margin-bottom: 10px;
+}
+.stock-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 .stock-item {
-    margin: 10px 0;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f9f9f9;
+  margin: 10px 0;
+  padding: 12px 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #f9f9f9;
+  transition: box-shadow 0.2s;
+}
+.stock-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.stock-meta {
+  color: #888;
+  font-size: 0.95em;
 }
 .details-link {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  margin-left: 10px;
 }
 .details-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 canvas {
-    margin: 30px 0 10px 0;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.07);
-    padding: 10px;
-    max-width: 100%;
+  margin: 20px 0 10px 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+  padding: 10px;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-
 {% endblock %}
