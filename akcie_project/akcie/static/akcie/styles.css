@@ -237,7 +237,6 @@ table tr:hover, .premium-table tr:hover {
     position: absolute;
     top: 8px; bottom: 8px;
     width: 4px;
-    }
 }
 
 input:focus, select:focus, textarea:focus, .button:focus, button:focus {
