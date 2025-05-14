@@ -122,15 +122,23 @@ def filter_akcie(query):
 
 def convert_to_czk(amount, from_currency):
     if from_currency == 'CZK':
-        return amount
+        return float(amount)
     try:
-        response = requests.get(f'https://api.exchangerate.host/latest?base={from_currency}&symbols=CZK')
-        data = response.json()
-        rate = data['rates']['CZK']
-        return float(amount) * float(rate)
+        r = requests.get('https://www.cnb.cz/en/financial-markets/foreign-exchange-market/exchange-rate-fixing/daily.txt')
+        if r.status_code == 200:
+            lines = r.text.split('\n')
+            for line in lines:
+                # Opravdu přesné porovnání měny (např. 'USD|1|...')
+                if line.startswith(f'{from_currency}|'):
+                    parts = line.split('|')
+                    kurz = float(parts[4].replace(',', '.'))
+                    print(f"[DEBUG] CNB {from_currency}/CZK kurz použit: {kurz}")
+                    return float(amount) * kurz
+        print(f"[WARNING] Kurz pro {from_currency}/CZK není dostupný, použit fallback 23.0")
+        return float(amount) * 23.0
     except Exception as e:
         print(f"Chyba při převodu měny: {e}")
-        return amount  # fallback: vrátí původní hodnotu
+        return float(amount) * 23.0
 
 def convert_to_czk_api(request):
     try:
@@ -148,6 +156,31 @@ def index(request):
     Úvodní stránka zobrazující akcie vybrané uživatelem a grafy pro finanční poradce.
     """
     user_stocks = Akcie.objects.filter(user=request.user)
+
+    # Oprava: vždy získat aktuální cenu a měnu z yfinance pro každou akcii
+    user_stocks_czk = []
+    for akcie in user_stocks:
+        ticker = getattr(akcie, 'ticker', None) or akcie.nazev
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            current_price = float(info.get('regularMarketPrice', akcie.cena_za_kus))
+            currency = info.get('currency', 'CZK')
+        except Exception:
+            current_price = akcie.cena_za_kus
+            currency = 'CZK'
+        current_price_czk = convert_to_czk(current_price, currency)
+        hodnota_czk = akcie.pocet_ks * current_price_czk
+        nakup_czk = float(akcie.nakup)  # OPRAVA: vždy převést na float
+        zisk_ztrata_czk = hodnota_czk - nakup_czk
+        user_stocks_czk.append({
+            'id': akcie.id,
+            'nazev': akcie.nazev,
+            'pocet_ks': akcie.pocet_ks,
+            'cena_za_kus': round(current_price_czk, 2),
+            'hodnota': round(hodnota_czk, 2),
+            'zisk_ztrata': round(zisk_ztrata_czk, 2),
+        })
 
     # --- NOVÁ LOGIKA: Vývoj hodnoty portfolia v čase podle transakcí a historických cen ---
     from collections import defaultdict
@@ -229,7 +262,7 @@ def index(request):
     dist_values = [float(item['total_value']) for item in stock_distribution]
 
     context = {
-        'user_stocks': user_stocks,
+        'user_stocks': user_stocks_czk,
         'history_labels': history_labels if history_labels is not None else [],
         'history_values': history_values if history_values is not None else [],
         'dividend_labels': dividend_labels if dividend_labels is not None else [],
@@ -241,13 +274,46 @@ def index(request):
 
 @login_required
 def akcie_list(request):
-    """
-    Zobrazuje seznam akcií s možností filtrování podle dotazu.
-    :param request: HTTP request objekt.
-    """
+    import yfinance as yf
+    from decimal import Decimal
     query = request.GET.get('q')
-    akcie = filter_akcie(query) if query else Akcie.objects.all()
-    return render(request, 'akcie/akcie_list.html', {'akcie': akcie})
+    akcie_qs = filter_akcie(query) if query else Akcie.objects.all()
+    akcie_list = []
+    for akcie in akcie_qs:
+        ticker = getattr(akcie, 'ticker', None) or akcie.nazev
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            current_price = float(info.get('regularMarketPrice', akcie.cena_za_kus))
+            currency = info.get('currency', akcie.mena or 'CZK')
+        except Exception as e:
+            print(f"[DEBUG] yfinance error for {ticker}: {e}")
+            current_price = float(akcie.cena_za_kus)
+            currency = akcie.mena or 'CZK'
+        try:
+            current_price_czk = float(convert_to_czk(current_price, currency))
+        except Exception as e:
+            print(f"[DEBUG] convert_to_czk error for {ticker}: {e}")
+            current_price_czk = current_price
+        hodnota_czk = float(akcie.pocet_ks) * current_price_czk
+        if akcie.mena == 'CZK' or not akcie.mena:
+            nakup_czk = float(akcie.nakup)
+        else:
+            nakup_czk = float(akcie.nakup)
+        zisk_ztrata_czk = hodnota_czk - nakup_czk
+        if ticker and ticker.lower() == 'aapl':
+            print(f"[DEBUG] AAPL: cena={current_price} {currency}, cena_czk={current_price_czk}, hodnota_czk={hodnota_czk}, nakup_czk={nakup_czk}, zisk_ztrata_czk={zisk_ztrata_czk}")
+        akcie_list.append({
+            'id': akcie.id,
+            'nazev': akcie.nazev,
+            'ticker': akcie.ticker,
+            'mena': currency,
+            'pocet_ks': akcie.pocet_ks,
+            'datum': akcie.datum,
+            'hodnota': round(hodnota_czk, 2),
+            'zisk_ztrata': round(zisk_ztrata_czk, 2),
+        })
+    return render(request, 'akcie/akcie_list.html', {'akcie': akcie_list})
 
 # Refaktorování akcie_detail
 
@@ -283,7 +349,6 @@ def akcie_create(request):
         currency = 'CZK'
         try:
             stock = yf.Ticker(ticker)
-            # Správné načtení historické ceny
             datum_dt = datetime.strptime(datum, "%Y-%m-%d")
             end_dt = datum_dt + timedelta(days=1)
             hist = stock.history(start=datum_dt.strftime("%Y-%m-%d"), end=end_dt.strftime("%Y-%m-%d"))
@@ -292,7 +357,6 @@ def akcie_create(request):
             if not hist.empty:
                 cena_za_kus = float(hist.iloc[0]['Close'])
             else:
-                # Pokud není cena pro daný den, najdi nejbližší předchozí obchodní den
                 for i in range(1, 7):
                     prev_dt = datum_dt - timedelta(days=i)
                     prev_end = prev_dt + timedelta(days=1)
@@ -303,19 +367,17 @@ def akcie_create(request):
                 else:
                     cena_za_kus = float(info.get('regularMarketPrice', 0))
             current_price = float(info.get('regularMarketPrice', cena_za_kus))
-            print(f"[DEBUG] {ticker} {datum}: cena_za_kus={cena_za_kus} {currency}, current_price={current_price} {currency}")
         except Exception as e:
             print(f"[ERROR] yfinance fetch: {e}")
             cena_za_kus = 0
             current_price = 0
+            currency = 'CZK'
         cena_za_kus_czk = convert_to_czk(cena_za_kus, currency)
         current_price_czk = convert_to_czk(current_price, currency)
-        print(f"[DEBUG] Přepočet: cena_za_kus_czk={cena_za_kus_czk}, current_price_czk={current_price_czk}")
         hodnota = pocet_ks * current_price_czk
         nakup = pocet_ks * cena_za_kus_czk
         zisk_ztrata = hodnota - nakup
         dividenda = hodnota * 0.05
-        print(f"[DEBUG] Výpočet: nakup={nakup}, hodnota={hodnota}, zisk_ztrata={zisk_ztrata}, ks={pocet_ks}")
         akcie = Akcie.objects.create(
             user=request.user,
             nazev=nazev,
@@ -326,7 +388,9 @@ def akcie_create(request):
             hodnota=hodnota,
             nakup=nakup,
             zisk_ztrata=zisk_ztrata,
-            dividenda=dividenda
+            dividenda=dividenda,
+            ticker=ticker,
+            mena=currency
         )
         return redirect('akcie_list')
     else:
@@ -517,6 +581,85 @@ def dividenda_delete(request, pk):
         return redirect('dividenda_list')
     return render(request, 'akcie/dividenda_confirm_delete.html', {'dividenda': dividenda})
 
+def import_akcie_csv(request):
+    if request.method == 'POST' and request.FILES['csv_file']:
+        csv_file = request.FILES['csv_file']
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Soubor musí být ve formátu CSV.')
+            return render(request, 'akcie/import_form.html')
+
+        decoded_file = csv_file.read().decode('utf-8').splitlines()
+        reader = csv.reader(decoded_file)
+        next(reader)  # Přeskočit hlavičku
+        for row in reader:
+            # Očekáváme: nazev, pocet_ks, cena_za_kus, hodnota, nakup, zisk_ztráta, dividenda, ticker, mena
+            nazev = row[0]
+            pocet_ks = int(row[1])
+            cena_za_kus = float(row[2])
+            hodnota = float(row[3])
+            nakup = float(row[4])
+            zisk_ztráta = float(row[5])
+            dividenda = float(row[6])
+            ticker = row[7] if len(row) > 7 else None
+            mena = row[8] if len(row) > 8 else 'CZK'
+            # Přepočet na CZK pokud není CZK
+            cena_za_kus_czk = convert_to_czk(cena_za_kus, mena)
+            hodnota_czk = convert_to_czk(hodnota, mena)
+            nakup_czk = convert_to_czk(nakup, mena)
+            zisk_ztráta_czk = convert_to_czk(zisk_ztráta, mena)
+            dividenda_czk = convert_to_czk(dividenda, mena)
+            Akcie.objects.create(
+                nazev=nazev,
+                pocet_ks=pocet_ks,
+                cena_za_kus=cena_za_kus_czk,
+                hodnota=hodnota_czk,
+                nakup=nakup_czk,
+                zisk_ztráta=zisk_ztráta_czk,
+                dividenda=dividenda_czk,
+                ticker=ticker,
+                mena=mena
+            )
+        messages.success(request, 'Data byla úspěšně importována.')
+        return render(request, 'akcie/import_form.html')
+    return render(request, 'akcie/import_form.html')
+
+def import_excel(request):
+    if request.method == 'POST' and request.FILES['excel_file']:
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file)
+        sheet = wb.active
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            # Očekáváme: nazev, pocet_ks, cena_za_kus, hodnota, nakup, zisk_ztráta, dividenda, ticker, mena
+            nazev = row[0]
+            pocet_ks = int(row[1])
+            cena_za_kus = float(row[2])
+            hodnota = float(row[3])
+            nakup = float(row[4])
+            zisk_ztráta = float(row[5])
+            dividenda = float(row[6])
+            ticker = row[7] if len(row) > 7 and row[7] else None
+            mena = row[8] if len(row) > 8 and row[8] else 'CZK'
+            cena_za_kus_czk = convert_to_czk(cena_za_kus, mena)
+            hodnota_czk = convert_to_czk(hodnota, mena)
+            nakup_czk = convert_to_czk(nakup, mena)
+            zisk_ztráta_czk = convert_to_czk(zisk_ztráta, mena)
+            dividenda_czk = convert_to_czk(dividenda, mena)
+            Akcie.objects.create(
+                nazev=nazev,
+                pocet_ks=pocet_ks,
+                cena_za_kus=cena_za_kus_czk,
+                hodnota=hodnota_czk,
+                nakup=nakup_czk,
+                zisk_ztráta=zisk_ztráta_czk,
+                dividenda=dividenda_czk,
+                ticker=ticker,
+                mena=mena
+            )
+        log_aktivita("Import dat z Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
+        return redirect('akcie_list')
+    return render(request, 'akcie/import_form.html')
+
 def export_akcie_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="akcie.csv"'
@@ -532,7 +675,7 @@ def export_akcie_csv(request):
             f"{a.cena_za_kus:,.2f} Kč",
             f"{a.hodnota:,.2f} Kč",
             f"{a.nakup:,.2f} Kč",
-            f"{a.zisk_ztrata:,.2f} Kč",
+            f"{a.zisk_ztráta:,.2f} Kč",
             f"{a.dividenda:,.2f} Kč"
         ])
 
@@ -602,54 +745,6 @@ def export_all_data_zip(request):
     response['Content-Disposition'] = 'attachment; filename="vsechna_data.zip"'
     return response
 
-def import_akcie_csv(request):
-    if request.method == 'POST' and request.FILES['csv_file']:
-        csv_file = request.FILES['csv_file']
-        if not csv_file.name.endswith('.csv'):
-            messages.error(request, 'Soubor musí být ve formátu CSV.')
-            return render(request, 'akcie/import_form.html')
-
-        decoded_file = csv_file.read().decode('utf-8').splitlines()
-        reader = csv.reader(decoded_file)
-        next(reader)  # Přeskočit hlavičku
-        for row in reader:
-            Akcie.objects.create(
-                nazev=row[0],
-                pocet_ks=int(row[1]),
-                cena_za_kus=float(row[2]),
-                hodnota=float(row[3]),
-                nakup=float(row[4]),
-                zisk_ztrata=float(row[5]),
-                dividenda=float(row[6])
-            )
-        messages.success(request, 'Data byla úspěšně importována.')
-        return render(request, 'akcie/import_form.html')
-
-    return render(request, 'akcie/import_form.html')
-
-def import_excel(request):
-    if request.method == 'POST' and request.FILES['excel_file']:
-        excel_file = request.FILES['excel_file']
-        wb = openpyxl.load_workbook(excel_file)
-        sheet = wb.active
-
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            Akcie.objects.create(
-                nazev=row[0],
-                pocet_ks=row[1],
-                cena_za_kus=row[2],
-                hodnota=row[3],
-                nakup=row[4],
-                zisk_ztrata=row[5],
-                dividenda=row[6]
-            )
-
-        log_aktivita("Import dat z Excelu", request.user.username if request.user.is_authenticated else "Anonymní")
-
-        return redirect('akcie_list')
-
-    return render(request, 'akcie/import_form.html')
-
 def export_excel(request):
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="akcie_export.xlsx"'
@@ -673,7 +768,7 @@ def export_excel(request):
             float(akcie.cena_za_kus),
             float(akcie.hodnota),
             float(akcie.nakup),
-            float(akcie.zisk_ztrata),
+            float(akcie.zisk_ztráta),
             float(akcie.dividenda)
         ])
 
@@ -697,7 +792,7 @@ def generate_akcie_pdf(request):
 
     akcie = Akcie.objects.all()
     for a in akcie:
-        p.drawString(100, y, f"Název: {a.nazev}, Počet kusů: {a.pocet_ks}, Cena za kus: {a.cena_za_kus:,.2f} Kč, Hodnota: {a.hodnota:,.2f} Kč, Zisk/Ztráta: {a.zisk_ztrata:,.2f} Kč, Dividenda: {a.dividenda:,.2f} Kč")
+        p.drawString(100, y, f"Název: {a.nazev}, Počet kusů: {a.pocet_ks}, Cena za kus: {a.cena_za_kus:,.2f} Kč, Hodnota: {a.hodnota:,.2f} Kč, Zisk/Ztráta: {a.zisk_ztráta:,.2f} Kč, Dividenda: {a.dividenda:,.2f} Kč")
         y -= 20
         if y < 50:
             p.showPage()
@@ -807,11 +902,19 @@ def dashboard(request):
     else:
         akcie = Akcie.objects.all()
 
+    # Přepočet všech akcií na CZK (pro jistotu i při starších datech/importech)
     total_akcie = akcie.count()
-    total_hodnota = akcie.aggregate(Sum('hodnota'))['hodnota__sum'] or 0
-    total_zisk_ztrata = akcie.aggregate(Sum('zisk_ztrata'))['zisk_ztrata__sum'] or 0
-
-    akcie_data = akcie.values('nazev', 'hodnota')
+    total_hodnota = 0
+    total_zisk_ztrata = 0
+    akcie_data = []
+    for a in akcie:
+        # Pokud by model měl pole 'mena', použij ho, jinak předpokládej CZK
+        mena = getattr(a, 'mena', 'CZK')
+        hodnota_czk = convert_to_czk(a.hodnota, mena)
+        zisk_ztrata_czk = convert_to_czk(a.zisk_ztrata, mena)
+        total_hodnota += hodnota_czk
+        total_zisk_ztrata += zisk_ztrata_czk
+        akcie_data.append({'nazev': a.nazev, 'hodnota': hodnota_czk})
 
     transakce_monthly = (
         Transakce.objects.annotate(month=TruncMonth('datum'))
@@ -831,9 +934,14 @@ def dashboard(request):
     investment_data = []
 
     for month in range(1, 13):
-        total_investment = Transakce.objects.filter(date__year=current_year, date__month=month).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_investment = Transakce.objects.filter(datum__year=current_year, datum__month=month).aggregate(Sum('cena'))['cena__sum'] or 0
         investment_data.append(total_investment)
 
+    transakce_typy = (
+        Transakce.objects.values('typ')
+        .annotate(count=Count('id'))
+        .order_by('typ')
+    )
     context = {
         'total_akcie': total_akcie,
         'total_hodnota': total_hodnota,
@@ -844,6 +952,7 @@ def dashboard(request):
         'months': months,
         'investment_data': investment_data,
         'query': query,
+        'transakce_typy': list(transakce_typy),
     }
     return render(request, 'akcie/dashboard.html', context)
 
@@ -1003,7 +1112,7 @@ def add_stock(request):
             cena_za_kus=info.get('regularMarketPrice', 0),
             hodnota=0,  # Default value
             nakup=0,  # Default value
-            zisk_ztrata=0,  # Default value
+            zisk_ztráta=0,  # Default value
             dividenda=0  # Default value
         )
         return JsonResponse({'message': 'Akcie byla úspěšně přidána!'}, status=201)
@@ -1057,3 +1166,27 @@ def api_dividenda_list(request):
     if request.method == 'GET':
         data = list(Dividenda.objects.values())
         return JsonResponse(data, safe=False)
+
+def klienti(request):
+    return render(request, 'akcie/klienti.html')
+
+def reporty(request):
+    return render(request, 'akcie/reporty.html')
+
+def analyzy(request):
+    return render(request, 'akcie/analyzy.html')
+
+def upozorneni(request):
+    return render(request, 'akcie/upozorneni.html')
+
+def nastaveni(request):
+    return render(request, 'akcie/nastaveni.html')
+
+def vip(request):
+    return render(request, 'akcie/vip.html')
+
+def chat(request):
+    return render(request, 'akcie/chat.html')
+
+def integrace(request):
+    return render(request, 'akcie/integrace.html')

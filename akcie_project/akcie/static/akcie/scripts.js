@@ -1,10 +1,24 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Hamburger menu
+    const hamburger = document.getElementById('lux-hamburger');
+    const menu = document.getElementById('lux-menu');
+    if (hamburger && menu) {
+        hamburger.addEventListener('click', function() {
+            menu.classList.toggle('lux-menu-open');
+        });
+        // Zavři menu při kliknutí mimo menu na mobilu
+        document.addEventListener('click', function(e) {
+            if (!menu.contains(e.target) && e.target !== hamburger) {
+                menu.classList.remove('lux-menu-open');
+            }
+        });
+    }
+
     // Zvýraznění aktivního odkazu v navigaci
     const navLinks = document.querySelectorAll('nav ul li a');
     navLinks.forEach(link => {
-        if (link.href === window.location.href) {
-            link.style.fontWeight = 'bold';
-            link.style.textDecoration = 'underline';
+        if (link.href === window.location.href || (link.pathname !== '/' && window.location.pathname.startsWith(link.pathname))) {
+            link.classList.add('active');
         }
     });
 

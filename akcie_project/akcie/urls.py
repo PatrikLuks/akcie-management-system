@@ -61,4 +61,12 @@ urlpatterns = [
     path('api/dividendy/', views.api_dividenda_list, name='api_dividenda_list'),
     path('health/', HealthCheckView.as_view(), name='health'),
     path('auditlog/', auditlog_list, name='auditlog_list'),
+    path('klienti/', views.klienti, name='klienti'),
+    path('reporty/', views.reporty, name='reporty'),
+    path('analyzy/', views.analyzy, name='analyzy'),
+    path('upozorneni/', views.upozorneni, name='upozorneni'),
+    path('nastaveni/', views.nastaveni, name='nastaveni'),
+    path('vip/', views.vip, name='vip'),
+    path('chat/', views.chat, name='chat'),
+    path('integrace/', views.integrace, name='integrace'),
 ]

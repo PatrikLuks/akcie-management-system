@@ -33,6 +33,8 @@ class Akcie(models.Model):
     nakup = models.DecimalField(max_digits=15, decimal_places=2)
     zisk_ztrata = models.DecimalField(max_digits=15, decimal_places=2)
     dividenda = models.DecimalField(max_digits=15, decimal_places=2)
+    ticker = models.CharField(max_length=20, null=True, blank=True, help_text="Oficiální ticker akcie dle burzy (např. AAPL pro Apple Inc.)")
+    mena = models.CharField(max_length=8, null=True, blank=True, default='CZK', help_text="Měna, ve které je akcie obchodována (např. USD, EUR, CZK)")
 
     def __str__(self):
         return self.nazev

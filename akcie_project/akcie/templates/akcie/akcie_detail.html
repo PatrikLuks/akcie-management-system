@@ -1,15 +1,25 @@
 {% extends 'akcie/base.html' %}
+{% load humanize %}
 {% block content %}
 <h1>Detail akcie: {{ akcie.nazev }}</h1>
 <table>
-  <tr><th>Počet kusů</th><td>{{ akcie.pocet_ks }}</td></tr>
-  <tr><th>Aktuální hodnota</th><td>{{ akcie.hodnota|floatformat:2 }} Kč</td></tr>
-  <tr><th>Nákupní cena za kus</th><td>{{ akcie.cena_za_kus|floatformat:2 }} Kč</td></tr>
-  <tr><th>Celkový nákup</th><td>{{ akcie.nakup|floatformat:2 }} Kč</td></tr>
-  <tr><th>Zisk / Ztráta</th><td>{{ akcie.zisk_ztrata|floatformat:2 }} Kč</td></tr>
+  <tr><th>Ticker</th><td>{{ akcie.ticker }}</td></tr>
+  <tr><th>Měna</th><td>{{ akcie.mena }}</td></tr>
+  <tr><th>Počet kusů</th><td>{{ akcie.pocet_ks|intcomma }}</td></tr>
+  <tr><th>Aktuální hodnota</th><td>{{ akcie.hodnota|floatformat:2|intcomma }} Kč</td></tr>
+  <tr><th>Nákupní cena za kus</th><td>{{ akcie.cena_za_kus|floatformat:2|intcomma }} Kč</td></tr>
+  <tr><th>Celkový nákup</th><td>{{ akcie.nakup|floatformat:2|intcomma }} Kč</td></tr>
+  <tr><th>Zisk / Ztráta</th><td>{{ akcie.zisk_ztrata|floatformat:2|intcomma }} Kč</td></tr>
   <tr><th>Datum nákupu</th><td>{{ akcie.datum }}</td></tr>
   <tr><th>Čas nákupu</th><td>{{ akcie.cas }}</td></tr>
 </table>
+
+<div style="margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+  <a href="/akcie/{{ akcie.id }}/update/" class="button">Upravit</a>
+  <a href="/akcie/{{ akcie.id }}/delete/" class="button-delete">Smazat</a>
+  <a href="/akcie/" class="button">Zpět na seznam</a>
+</div>
+
 <h2>Transakce</h2>
 <table>
   <thead>
@@ -19,8 +29,8 @@
     {% for transakce in transakce %}
     <tr>
       <td>{{ transakce.typ|title }}</td>
-      <td>{{ transakce.mnozstvi }}</td>
-      <td>{{ transakce.cena|floatformat:2 }} Kč</td>
+      <td>{{ transakce.mnozstvi|intcomma }}</td>
+      <td>{{ transakce.cena|floatformat:2|intcomma }} Kč</td>
       <td>{{ transakce.datum }}</td>
     </tr>
     {% empty %}
@@ -37,7 +47,7 @@
     {% for dividenda in dividendy %}
     <tr>
       <td>{{ dividenda.datum }}</td>
-      <td>{{ dividenda.castka|floatformat:2 }}</td>
+      <td>{{ dividenda.castka|floatformat:2|intcomma }}</td>
     </tr>
     {% empty %}
     <tr><td colspan="2">Žádné dividendy</td></tr>

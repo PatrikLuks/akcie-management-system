@@ -1,0 +1,8 @@
+Django>=4.2,<5.0
+requests
+yfinance
+openpyxl
+reportlab
+webdriver-manager
+selenium
+django-cron

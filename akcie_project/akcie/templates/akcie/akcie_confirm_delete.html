@@ -1,7 +1,18 @@
-<h1>Opravdu chcete smazat tuto akcii?</h1>
-<p>Název: {{ akcie.nazev }}</p>
-<form method="post">
+{% extends 'akcie/base.html' %}
+{% block content %}
+<div class="card lux-card" style="max-width:520px;margin:48px auto 0 auto;text-align:center;box-shadow:0 8px 48px #bfa14a33;">
+  <div style="font-size:3.2em;margin-bottom:18px;">⚠️</div>
+  <h1 style="color:#c0392b;margin-bottom:12px;">Opravdu chcete smazat tuto akcii?</h1>
+  <div style="font-size:1.2em;margin-bottom:18px;">
+    <strong>Název akcie:</strong> <span style="color:var(--lux-gold);font-weight:700;">{{ akcie.nazev }}</span>
+  </div>
+  <form method="post" style="margin-bottom:18px;">
     {% csrf_token %}
-    <button type="submit">Ano, smazat</button>
-</form>
-<a href="/akcie/">Zpět na seznam akcií</a>
+    <button type="submit" class="button-delete" style="font-size:1.15em;padding:18px 48px;">Ano, nenávratně smazat</button>
+  </form>
+  <a href="/akcie/" class="button" style="background:var(--lux-dark);color:var(--lux-gold);font-weight:600;">Zpět na seznam akcií</a>
+  <div style="margin-top:24px;color:#fffbe6;font-size:0.98em;opacity:0.85;">
+    <span style="font-size:1.3em;vertical-align:middle;">💡</span> Tato akce je nevratná. Všechny související transakce a dividendy budou také odstraněny.
+  </div>
+</div>
+{% endblock %}

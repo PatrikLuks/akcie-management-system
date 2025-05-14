@@ -1,12 +1,16 @@
 {% extends 'akcie/base.html' %}
+{% load humanize %}
 {% block content %}
 <h1>Seznam akcií</h1>
-<a href="/akcie/create/">Přidat novou akcii</a>
+<a href="/akcie/create/" class="button">Přidat novou akcii</a>
 <table>
   <thead>
     <tr>
       <th>Název</th>
+      <th>Ticker</th>
+      <th>Měna</th>
       <th>Počet</th>
+      <th>Datum nákupu</th>
       <th>Hodnota</th>
       <th>Zisk/Ztráta</th>
       <th>Akce</th>
@@ -16,10 +20,17 @@
     {% for akcie in akcie %}
     <tr>
       <td>{{ akcie.nazev }}</td>
-      <td>{{ akcie.pocet_ks }}</td>
-      <td>{{ akcie.hodnota }} Kč</td>
-      <td>{{ akcie.zisk_ztrata }} Kč</td>
-      <td><a href="/akcie/{{ akcie.id }}/">Detail</a></td>
+      <td>{{ akcie.ticker }}</td>
+      <td>{{ akcie.mena }}</td>
+      <td>{{ akcie.pocet_ks|intcomma }}</td>
+      <td>{{ akcie.datum }}</td>
+      <td>{{ akcie.hodnota|floatformat:2|intcomma }} Kč</td>
+      <td>{{ akcie.zisk_ztrata|floatformat:2|intcomma }} Kč</td>
+      <td style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/akcie/{{ akcie.id }}/" class="button">Detail</a>
+        <a href="/akcie/{{ akcie.id }}/update/" class="button">Upravit</a>
+        <a href="/akcie/{{ akcie.id }}/delete/" class="button-delete">Smazat</a>
+      </td>
     </tr>
     {% endfor %}
   </tbody>

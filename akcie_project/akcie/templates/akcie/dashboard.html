@@ -31,6 +31,9 @@
 <div>
   <canvas id="dividendyChart" width="400" height="200"></canvas>
   <canvas id="transakceChart" width="400" height="200"></canvas>
+  <canvas id="investiceChart" width="400" height="200"></canvas>
+  <canvas id="transakceMonthlyChart" width="400" height="200"></canvas>
+  <canvas id="dividendyAkcieChart" width="400" height="200"></canvas>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -58,13 +61,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     const transakceCtx = document.getElementById('transakceChart').getContext('2d');
+    // Převod dat pro graf
+    const transakceLabels = [{% for t in transakce_typy %}'{{ t.typ }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const transakceData = [{% for t in transakce_typy %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
     new Chart(transakceCtx, {
         type: 'pie',
         data: {
-            labels: {{ transakce_typy|map(attribute='typ')|join:","|safe }},
+            labels: transakceLabels,
             datasets: [{
                 label: 'Počet transakcí',
-                data: {{ transakce_typy|map(attribute='count')|join:","|safe }},
+                data: transakceData,
+                backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
+                borderColor: luxGold(1),
+                borderWidth: 2
+            }]
+        },
+        options: { plugins: { legend: { labels: { color: luxGold(1) } } } }
+    });
+    // Investice v průběhu roku
+    const investiceCtx = document.getElementById('investiceChart').getContext('2d');
+    const investiceLabels = {{ months|safe }};
+    const investiceData = {{ investment_data|safe }};
+    new Chart(investiceCtx, {
+        type: 'line',
+        data: {
+            labels: investiceLabels,
+            datasets: [{
+                label: 'Investice v roce',
+                data: investiceData,
+                borderColor: luxGold(0),
+                backgroundColor: 'rgba(191,161,74,0.13)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: luxGold(1),
+                pointBorderColor: luxGold(0),
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: luxGold(0),
+                pointHoverBorderColor: luxGold(1)
+            }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: luxGold(1) } } },
+            scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } }
+        }
+    });
+    // Měsíční počet transakcí
+    const transakceMonthlyCtx = document.getElementById('transakceMonthlyChart').getContext('2d');
+    const transakceMonthlyLabels = [{% for t in transakce_monthly %}'{{ t.month|date:'M Y' }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const transakceMonthlyData = [{% for t in transakce_monthly %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    new Chart(transakceMonthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: transakceMonthlyLabels,
+            datasets: [{
+                label: 'Počet transakcí (měsíčně)',
+                data: transakceMonthlyData,
+                backgroundColor: luxGold(0),
+                borderColor: luxGold(1),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: luxGold(1) } } },
+            scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } }
+        }
+    });
+    // Rozložení dividend podle akcií
+    const dividendyAkcieCtx = document.getElementById('dividendyAkcieChart').getContext('2d');
+    const dividendyAkcieLabels = [{% for d in dividendy_data %}'{{ d.akcie__nazev }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const dividendyAkcieData = [{% for d in dividendy_data %}{{ d.total_castka }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    new Chart(dividendyAkcieCtx, {
+        type: 'pie',
+        data: {
+            labels: dividendyAkcieLabels,
+            datasets: [{
+                label: 'Dividendy podle akcií',
+                data: dividendyAkcieData,
                 backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
                 borderColor: luxGold(1),
                 borderWidth: 2

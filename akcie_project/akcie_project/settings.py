@@ -38,10 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',  # Přidáno pro filtr intcomma
+    'akcie',
+    'django_cron',
 ]
-
-INSTALLED_APPS += ['akcie']
-INSTALLED_APPS += ['django_cron']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
