@@ -108,17 +108,69 @@ def index(request):
     Úvodní stránka zobrazující akcie vybrané uživatelem a grafy pro finanční poradce.
     """
     user_stocks = Akcie.objects.filter(user=request.user)
-    # Vývoj hodnoty portfolia v čase (po měsících)
-    portfolio_history = (
-        Akcie.objects.filter(user=request.user)
-        .values('datum')
-        .order_by('datum')
-        .annotate(total_value=Sum('hodnota'))
-    )
-    history_labels = [str(item['datum']) for item in portfolio_history]
-    history_values = [float(item['total_value']) for item in portfolio_history]
 
-    # Vývoj příjmů z dividend v čase (po měsících)
+    # --- NOVÁ LOGIKA: Vývoj hodnoty portfolia v čase podle transakcí a historických cen ---
+    from collections import defaultdict
+    import yfinance as yf
+    from datetime import date, timedelta
+    import calendar
+
+    # 1. Zjisti všechny tickery v portfoliu uživatele
+    tickers = set()
+    for akcie in user_stocks:
+        ticker = getattr(akcie, 'ticker', None)
+        if ticker:
+            tickers.add(ticker)
+        else:
+            tickers.add(akcie.nazev)  # fallback, pokud není ticker
+
+    # 2. Zjisti všechny měsíce, kdy uživatel držel nějakou akcii
+    transakce = Transakce.objects.filter(akcie__user=request.user).order_by('datum')
+    if not transakce.exists():
+        history_labels = []
+        history_values = []
+    else:
+        first = transakce.first().datum.replace(day=1)
+        last = date.today().replace(day=1)
+        months = []
+        d = first
+        while d <= last:
+            months.append(d)
+            if d.month == 12:
+                d = d.replace(year=d.year+1, month=1)
+            else:
+                d = d.replace(month=d.month+1)
+        history_labels = [d.strftime('%Y-%m') for d in months]
+        history_values = []
+        for d in months:
+            total = 0
+            for akcie in user_stocks:
+                # Kolik kusů akcie uživatel v daném měsíci držel?
+                last_day = d.replace(day=calendar.monthrange(d.year, d.month)[1])
+                trans = Transakce.objects.filter(akcie=akcie, datum__lte=last_day)
+                ks = 0
+                for t in trans:
+                    if t.typ == 'nákup':
+                        ks += t.mnozstvi
+                    elif t.typ == 'prodej':
+                        ks -= t.mnozstvi
+                if ks <= 0:
+                    continue
+                # Získej historickou cenu akcie k poslednímu dni měsíce
+                ticker = getattr(akcie, 'ticker', None) or akcie.nazev
+                try:
+                    stock = yf.Ticker(ticker)
+                    hist = stock.history(start=last_day.strftime('%Y-%m-%d'), end=(last_day+timedelta(days=1)).strftime('%Y-%m-%d'))
+                    if not hist.empty:
+                        cena = float(hist.iloc[0]['Close'])
+                    else:
+                        cena = float(stock.info.get('regularMarketPrice', 0))
+                except Exception:
+                    cena = 0
+                total += ks * cena
+            history_values.append(round(total, 2))
+
+    # --- Ostatní grafy beze změny ---
     dividend_history = (
         Dividenda.objects.filter(akcie__user=request.user)
         .values('datum')
@@ -128,7 +180,6 @@ def index(request):
     dividend_labels = [str(item['datum']) for item in dividend_history]
     dividend_values = [float(item['total_dividend']) for item in dividend_history]
 
-    # Rozložení portfolia podle akcií (název a hodnota)
     stock_distribution = (
         Akcie.objects.filter(user=request.user)
         .values('nazev')
