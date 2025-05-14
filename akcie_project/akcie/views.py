@@ -105,10 +105,48 @@ def convert_to_czk_api(request):
 @login_required
 def index(request):
     """
-    Úvodní stránka zobrazující akcie vybrané uživatelem.
+    Úvodní stránka zobrazující akcie vybrané uživatelem a grafy pro finanční poradce.
     """
-    user_stocks = Akcie.objects.filter(user=request.user)  # Assuming Akcie has a user field
-    return render(request, 'akcie/index.html', {'user_stocks': user_stocks})
+    user_stocks = Akcie.objects.filter(user=request.user)
+    # Vývoj hodnoty portfolia v čase (po měsících)
+    portfolio_history = (
+        Akcie.objects.filter(user=request.user)
+        .values('datum')
+        .order_by('datum')
+        .annotate(total_value=Sum('hodnota'))
+    )
+    history_labels = [str(item['datum']) for item in portfolio_history]
+    history_values = [float(item['total_value']) for item in portfolio_history]
+
+    # Vývoj příjmů z dividend v čase (po měsících)
+    dividend_history = (
+        Dividenda.objects.filter(akcie__user=request.user)
+        .values('datum')
+        .order_by('datum')
+        .annotate(total_dividend=Sum('castka'))
+    )
+    dividend_labels = [str(item['datum']) for item in dividend_history]
+    dividend_values = [float(item['total_dividend']) for item in dividend_history]
+
+    # Rozložení portfolia podle akcií (název a hodnota)
+    stock_distribution = (
+        Akcie.objects.filter(user=request.user)
+        .values('nazev')
+        .annotate(total_value=Sum('hodnota'))
+    )
+    dist_labels = [item['nazev'] for item in stock_distribution]
+    dist_values = [float(item['total_value']) for item in stock_distribution]
+
+    context = {
+        'user_stocks': user_stocks,
+        'history_labels': history_labels,
+        'history_values': history_values,
+        'dividend_labels': dividend_labels,
+        'dividend_values': dividend_values,
+        'dist_labels': dist_labels,
+        'dist_values': dist_values,
+    }
+    return render(request, 'akcie/index.html', context)
 
 @login_required
 def akcie_list(request):
