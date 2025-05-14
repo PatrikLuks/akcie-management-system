@@ -9,10 +9,15 @@ class AkcieForm(forms.ModelForm):
     datum = forms.DateField(label='Datum', widget=forms.DateInput(attrs={'type': 'date'}), initial=now().astimezone(prague_tz).date)
     cas = forms.TimeField(label='Čas', widget=forms.TimeInput(attrs={'type': 'time'}), initial=now().astimezone(prague_tz).time)
     pocet_ks = forms.IntegerField(label='Počet kusů')
+    cena_za_kus = forms.DecimalField(label='Cena za kus', max_digits=10, decimal_places=2)
+    hodnota = forms.DecimalField(label='Hodnota', max_digits=15, decimal_places=2, required=False)
+    nakup = forms.DecimalField(label='Nákup', max_digits=15, decimal_places=2, required=False)
+    zisk_ztrata = forms.DecimalField(label='Zisk/Ztráta', max_digits=15, decimal_places=2, required=False)
+    dividenda = forms.DecimalField(label='Dividenda', max_digits=15, decimal_places=2, required=False)
 
     class Meta:
         model = Akcie
-        fields = ['nazev', 'datum', 'cas', 'pocet_ks']
+        fields = ['nazev', 'datum', 'cas', 'pocet_ks', 'cena_za_kus', 'hodnota', 'nakup', 'zisk_ztrata', 'dividenda']
 
 class TransakceForm(forms.ModelForm):
     akcie = forms.ChoiceField(choices=[], label='Akcie')

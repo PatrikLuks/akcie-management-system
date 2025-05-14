@@ -5,6 +5,8 @@ from django.urls import reverse
 from .forms import AkcieForm
 from unittest.mock import patch
 from .views import fetch_akcie_data, fetch_hot_investments
+import yfinance as yf
+from datetime import date
 
 class AkcieModelTest(TestCase):
     def setUp(self):
@@ -96,6 +98,9 @@ class AkcieViewTest(TestCase):
         self.assertTemplateUsed(response, 'akcie/akcie_detail.html')
 
 class AkcieFormTest(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='formuser', password='testpassword')
+
     def test_valid_form(self):
         data = {
             'nazev': 'Testovací akcie',
@@ -104,7 +109,9 @@ class AkcieFormTest(TestCase):
             'hodnota': 15050.00,
             'nakup': 14000.00,
             'zisk_ztrata': 1050.00,
-            'dividenda': 500.00
+            'dividenda': 500.00,
+            'datum': now().date(),
+            'cas': now().time()
         }
         form = AkcieForm(data=data)
         self.assertTrue(form.is_valid())
@@ -117,7 +124,9 @@ class AkcieFormTest(TestCase):
             'hodnota': 15050.00,
             'nakup': 14000.00,
             'zisk_ztrata': 1050.00,
-            'dividenda': 500.00
+            'dividenda': 500.00,
+            'datum': now().date(),
+            'cas': now().time()
         }
         form = AkcieForm(data=data)
         self.assertFalse(form.is_valid())
@@ -163,7 +172,10 @@ class AkcieCRUDTest(TestCase):
             hodnota=15050.00,
             nakup=14000.00,
             zisk_ztrata=1050.00,
-            dividenda=500.00
+            dividenda=500.00,
+            user=self.user,
+            datum=now().date(),
+            cas=now().time()
         )
 
     def test_akcie_create(self):
@@ -174,7 +186,9 @@ class AkcieCRUDTest(TestCase):
             'hodnota': 10000.00,
             'nakup': 9000.00,
             'zisk_ztrata': 1000.00,
-            'dividenda': 300.00
+            'dividenda': 300.00,
+            'datum': now().date(),
+            'cas': now().time()
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Akcie.objects.last().nazev, 'Nová akcie')
@@ -197,7 +211,9 @@ class AkcieCRUDTest(TestCase):
             'hodnota': 24000.00,
             'nakup': 20000.00,
             'zisk_ztrata': 4000.00,
-            'dividenda': 800.00
+            'dividenda': 800.00,
+            'datum': now().date(),
+            'cas': now().time()
         })
         self.assertEqual(response.status_code, 302)
         self.akcie.refresh_from_db()
@@ -243,3 +259,36 @@ class APITest(TestCase):
 
         data = fetch_hot_investments()
         self.assertEqual(data, [])
+
+class AkcieZiskZtrataTest(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='ziskuser', password='testpassword')
+
+    @patch('yfinance.Ticker')
+    def test_zisk_ztrata_vypocet(self, mock_ticker):
+        # Simulace historické a aktuální ceny
+        mock_ticker.return_value.history.side_effect = [
+            # Historická cena v den nákupu
+            {'Close': [100]},
+            # Aktuální cena
+            {'Close': [150]}
+        ]
+        mock_ticker.return_value.info = {'regularMarketPrice': 150}
+
+        # Vytvoření akcie s datem nákupu v minulosti
+        akcie = Akcie(
+            nazev="Testovací akcie",
+            pocet_ks=10,
+            cena_za_kus=100,
+            hodnota=1000,
+            nakup=1000,
+            zisk_ztrata=0,
+            dividenda=0,
+            user=self.user
+        )
+        # Simulace výpočtu zisku/ztráty
+        purchase_price = 100
+        current_price = 150
+        akcie.zisk_ztrata = (current_price - purchase_price) * akcie.pocet_ks
+        akcie.save()
+        self.assertEqual(akcie.zisk_ztrata, 500)

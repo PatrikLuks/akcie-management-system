@@ -1,65 +1,209 @@
-<h1>Přidat novou akcii</h1>
-
-<div id="stock-search">
-    <input type="text" id="search-bar" placeholder="Vyhledat akcii...">
+<h1>Přidat akcii do portfolia</h1>
+<div class="stock-create-container">
+  <div class="stock-search-box">
+    <input type="text" id="search-bar" placeholder="Vyhledat akcii (název nebo ticker)...">
     <button id="search-button">Hledat</button>
-</div>
-
-<div id="search-results">
-    <!-- Výsledky hledání se zobrazí zde -->
+  </div>
+  <div id="search-results"></div>
+  <form id="add-stock-form" method="post" style="display:none;">
+    {% csrf_token %}
+    <div>
+      <label for="selected-stock">Vybraná akcie:</label>
+      <input type="text" id="selected-stock" name="nazev" readonly required>
+    </div>
+    <div>
+      <label for="datum">Datum nákupu:</label>
+      <select id="datum" name="datum" required></select>
+    </div>
+    <div>
+      <label for="cas">Čas nákupu:</label>
+      <input type="time" id="cas" name="cas" value="{{ form.cas.value|default:None }}">
+      <small>(Nepovinné, pokud nevyplníte, použije se výchozí čas 00:00)</small>
+    </div>
+    <div>
+      <label for="pocet_ks">Počet kusů:</label>
+      <input type="number" id="pocet_ks" name="pocet_ks" min="1" required>
+    </div>
+    <input type="hidden" id="ticker" name="ticker">
+    <button type="submit">Přidat akcii</button>
+  </form>
 </div>
 
 <script>
-    document.getElementById('search-button').addEventListener('click', function() {
-        const query = document.getElementById('search-bar').value.trim();
-        if (!query) {
-            alert('Prosím zadejte platný ticker symbol nebo název akcie.');
-            return;
-        }
-        fetch(`/akcie/search/?q=${query}`)
-            .then(response => response.json())
-            .then(data => {
-                const resultsDiv = document.getElementById('search-results');
-                resultsDiv.innerHTML = '';
-                if (data.length === 0) {
-                    resultsDiv.innerHTML = '<p>Žádné výsledky nenalezeny.</p>';
-                    return;
-                }
-                data.forEach(stock => {
-                    const stockDiv = document.createElement('div');
-                    stockDiv.className = 'stock-item';
-                    stockDiv.innerHTML = `
-                        <span>${stock.nazev} (${stock.ticker}) - ${stock.cena} Kč</span>
-                        <button onclick="addStock('${stock.ticker}')">+</button>
-                    `;
-                    resultsDiv.appendChild(stockDiv);
-                });
-            });
-    });
+const searchBtn = document.getElementById('search-button');
+const searchBar = document.getElementById('search-bar');
+const resultsDiv = document.getElementById('search-results');
+const addForm = document.getElementById('add-stock-form');
+const selectedStockInput = document.getElementById('selected-stock');
+const tickerInput = document.getElementById('ticker');
+const datumSelect = document.getElementById('datum');
 
-    function addStock(ticker) {
-        fetch(`/akcie/add/?ticker=${ticker}`, { method: 'POST' })
-            .then(response => {
-                if (response.ok) {
-                    alert('Akcie byla přidána do seznamu!');
-                } else {
-                    alert('Došlo k chybě při přidávání akcie.');
-                }
+searchBtn.addEventListener('click', function() {
+  const query = searchBar.value.trim();
+  if (!query) {
+    alert('Zadejte název nebo ticker akcie.');
+    return;
+  }
+  resultsDiv.innerHTML = 'Načítání...';
+  fetch(`/akcie/search/?q=${query}`)
+    .then(response => response.json())
+    .then(data => {
+      resultsDiv.innerHTML = '';
+      if (data.length === 0) {
+        resultsDiv.innerHTML = '<p>Žádné výsledky nenalezeny.</p>';
+        return;
+      }
+      data.forEach(stock => {
+        const stockDiv = document.createElement('div');
+        // Přidej zobrazení měny
+        const currency = stock.mena || stock.currency || 'CZK';
+        stockDiv.className = 'stock-item';
+        stockDiv.innerHTML = `<strong>${stock.nazev}</strong> (${stock.ticker}) - ${stock.cena} ${currency} <button type="button">Vybrat</button><br><small>Cena bude automaticky přepočtena na CZK podle aktuálního kurzu.</small>`;
+        stockDiv.querySelector('button').onclick = function() {
+          selectedStockInput.value = stock.nazev;
+          tickerInput.value = stock.ticker;
+          addForm.style.display = 'block';
+          resultsDiv.innerHTML = '';
+          datumSelect.innerHTML = '<option>Načítání...</option>';
+          fetch(`/akcie/history_dates/?ticker=${stock.ticker}`)
+            .then(resp => resp.json())
+            .then(dates => {
+              datumSelect.innerHTML = '';
+              dates.forEach(date => {
+                const opt = document.createElement('option');
+                opt.value = date;
+                opt.textContent = date;
+                datumSelect.appendChild(opt);
+              });
+              if (dates.length > 0) {
+                datumSelect.value = dates[dates.length-1]; // výchozí poslední datum
+              }
             });
-    }
+        };
+        resultsDiv.appendChild(stockDiv);
+      });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Nastav výchozí čas na aktuální čas
+  const casInput = document.getElementById('cas');
+  if (casInput && !casInput.value) {
+    const now = new Date();
+    const pad = n => n < 10 ? '0' + n : n;
+    casInput.value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  }
+});
 </script>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateField = document.querySelector('input[name="datum"]');
-            if (dateField) {
-                dateField.readOnly = true; // Make the date field read-only
-            }
-        });
-    </script>
-    <button type="submit">Uložit</button>
-</form>
-<a href="/akcie/">Zpět na seznam akcií</a>
+<style>
+.stock-create-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+  padding: 40px 30px 30px 30px;
+}
+.stock-search-box {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+#search-bar {
+  flex: 1;
+  width: 70vw;
+  max-width: 70vw;
+  min-width: 200px;
+  padding: 12px;
+  border-radius: 7px;
+  border: 1.5px solid #bdbdbd;
+  font-size: 1.1rem;
+}
+#search-button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 7px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#search-button:hover {
+  background: #0056b3;
+}
+#search-results .stock-item {
+  background: #f4f4f9;
+  margin: 10px 0;
+  padding: 16px 12px;
+  border-radius: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.08rem;
+}
+#search-results .stock-item button {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 18px;
+  transition: background 0.2s;
+}
+#search-results .stock-item button:hover {
+  background: #1e7e34;
+}
+#add-stock-form > div {
+  margin-bottom: 22px;
+}
+#add-stock-form label {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: 500;
+  color: #222;
+}
+#add-stock-form input[type="text"],
+#add-stock-form input[type="date"],
+#add-stock-form input[type="time"],
+#add-stock-form input[type="number"],
+#add-stock-form select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1.5px solid #bdbdbd;
+  font-size: 1.08rem;
+  margin-top: 2px;
+  box-sizing: border-box;
+}
+#add-stock-form button[type="submit"] {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 13px 32px;
+  border-radius: 7px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+#add-stock-form button[type="submit"]:hover {
+  background: #0056b3;
+}
+#add-stock-form small {
+  color: #888;
+  font-size: 0.97em;
+}
+@media (max-width: 700px) {
+  .stock-create-container {
+    padding: 18px 5vw;
+  }
+  #search-bar {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+</style>

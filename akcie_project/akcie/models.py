@@ -24,6 +24,8 @@ class Akcie(models.Model):
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='akcie', default=get_default_user)
     nazev = models.CharField(max_length=100)
+    datum = models.DateField(default=now)
+    cas = models.TimeField(default=now)
     pocet_ks = models.IntegerField()
     cena_za_kus = models.DecimalField(max_digits=10, decimal_places=2)
     hodnota = models.DecimalField(max_digits=15, decimal_places=2)

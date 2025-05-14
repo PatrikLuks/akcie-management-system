@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock
+from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock, history_dates
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -18,6 +18,7 @@ urlpatterns = [
     path('akcie/export_json/', views.export_akcie_json, name='export_akcie_json'),
     path('akcie/search/', search_stocks, name='search_stocks'),
     path('akcie/add/', add_stock, name='add_stock'),
+    path('akcie/history_dates/', history_dates, name='history_dates'),
     path('transakce/', views.transakce_list, name='transakce_list'),
     path('transakce/<int:pk>/', views.transakce_detail, name='transakce_detail'),
     path('transakce/create/', views.transakce_create, name='transakce_create'),

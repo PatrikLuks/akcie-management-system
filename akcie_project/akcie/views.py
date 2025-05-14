@@ -17,6 +17,7 @@ from io import BytesIO
 from django.urls import reverse
 from django.core.mail import EmailMessage
 from django.utils.timezone import now
+from datetime import datetime, timedelta
 import os
 import zipfile
 import requests
@@ -77,6 +78,20 @@ def filter_akcie(query):
         Q(cena_za_kus__icontains=query)
     )
 
+# Pomocná funkce pro převod měny na CZK
+
+def convert_to_czk(amount, from_currency):
+    if from_currency == 'CZK':
+        return amount
+    try:
+        response = requests.get(f'https://api.exchangerate.host/latest?base={from_currency}&symbols=CZK')
+        data = response.json()
+        rate = data['rates']['CZK']
+        return float(amount) * float(rate)
+    except Exception as e:
+        print(f"Chyba při převodu měny: {e}")
+        return amount  # fallback: vrátí původní hodnotu
+
 @login_required
 def index(request):
     """
@@ -115,18 +130,65 @@ def akcie_detail(request, pk):
     context = get_akcie_detail_context(akcie)
     return render(request, 'akcie/akcie_detail.html', context)
 
+@login_required
 def akcie_create(request):
     if request.method == 'POST':
-        form = AkcieForm(request.POST)
-        if form.is_valid():
-            akcie = form.save(commit=False)
-            # Calculate zisk/ztrata based on purchase and current value
-            akcie.hodnota = akcie.pocet_ks * akcie.cena_za_kus
-            akcie.nakup = akcie.pocet_ks * akcie.cena_za_kus  # Assuming purchase price is the same as cena_za_kus
-            akcie.zisk_ztrata = akcie.hodnota - akcie.nakup
-            akcie.dividenda = akcie.hodnota * 0.05
-            akcie.save()
-            return redirect('akcie_list')
+        ticker = request.POST.get('ticker')
+        nazev = request.POST.get('nazev')
+        datum = request.POST.get('datum')
+        cas = request.POST.get('cas') or '00:00'
+        pocet_ks = int(request.POST.get('pocet_ks'))
+        cena_za_kus = 0
+        current_price = 0
+        currency = 'CZK'
+        try:
+            stock = yf.Ticker(ticker)
+            # Správné načtení historické ceny
+            datum_dt = datetime.strptime(datum, "%Y-%m-%d")
+            end_dt = datum_dt + timedelta(days=1)
+            hist = stock.history(start=datum_dt.strftime("%Y-%m-%d"), end=end_dt.strftime("%Y-%m-%d"))
+            info = stock.info
+            currency = info.get('currency', 'CZK')
+            if not hist.empty:
+                cena_za_kus = float(hist.iloc[0]['Close'])
+            else:
+                # Pokud není cena pro daný den, najdi nejbližší předchozí obchodní den
+                for i in range(1, 7):
+                    prev_dt = datum_dt - timedelta(days=i)
+                    prev_end = prev_dt + timedelta(days=1)
+                    prev_hist = stock.history(start=prev_dt.strftime("%Y-%m-%d"), end=prev_end.strftime("%Y-%m-%d"))
+                    if not prev_hist.empty:
+                        cena_za_kus = float(prev_hist.iloc[0]['Close'])
+                        break
+                else:
+                    cena_za_kus = float(info.get('regularMarketPrice', 0))
+            current_price = float(info.get('regularMarketPrice', cena_za_kus))
+            print(f"[DEBUG] {ticker} {datum}: cena_za_kus={cena_za_kus} {currency}, current_price={current_price} {currency}")
+        except Exception as e:
+            print(f"[ERROR] yfinance fetch: {e}")
+            cena_za_kus = 0
+            current_price = 0
+        cena_za_kus_czk = convert_to_czk(cena_za_kus, currency)
+        current_price_czk = convert_to_czk(current_price, currency)
+        print(f"[DEBUG] Přepočet: cena_za_kus_czk={cena_za_kus_czk}, current_price_czk={current_price_czk}")
+        hodnota = pocet_ks * current_price_czk
+        nakup = pocet_ks * cena_za_kus_czk
+        zisk_ztrata = hodnota - nakup
+        dividenda = hodnota * 0.05
+        print(f"[DEBUG] Výpočet: nakup={nakup}, hodnota={hodnota}, zisk_ztrata={zisk_ztrata}, ks={pocet_ks}")
+        akcie = Akcie.objects.create(
+            user=request.user,
+            nazev=nazev,
+            datum=datum,
+            cas=cas,
+            pocet_ks=pocet_ks,
+            cena_za_kus=cena_za_kus_czk,
+            hodnota=hodnota,
+            nakup=nakup,
+            zisk_ztrata=zisk_ztrata,
+            dividenda=dividenda
+        )
+        return redirect('akcie_list')
     else:
         form = AkcieForm()
     return render(request, 'akcie/akcie_form.html', {'form': form})
@@ -670,15 +732,14 @@ def search_stocks(request):
     query = request.GET.get('q', '').strip()
     if not query:
         return JsonResponse([], safe=False)
-
     try:
-        # Search by ticker symbol
         stock = yf.Ticker(query)
         info = stock.info
         result = [{
             'nazev': info.get('shortName', query),
             'ticker': query,
-            'cena': info.get('regularMarketPrice', 'N/A')
+            'cena': info.get('regularMarketPrice', 'N/A'),
+            'mena': info.get('currency', 'CZK')
         }]
         return JsonResponse(result, safe=False)
     except Exception as e:
@@ -723,3 +784,17 @@ def add_stock(request):
     except Exception as e:
         print(f"Chyba při přidávání akcie: {e}")
         return JsonResponse({'error': 'Došlo k chybě při přidávání akcie.'}, status=500)
+
+def history_dates(request):
+    ticker = request.GET.get('ticker')
+    if not ticker:
+        return JsonResponse([], safe=False)
+    try:
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period='max')
+        dates = [str(d.date()) for d in hist.index]
+        # Vrátíme pouze unikátní datumy (např. 1x za den)
+        return JsonResponse(sorted(list(set(dates))), safe=False)
+    except Exception as e:
+        print(f"Chyba při získávání historických dat: {e}")
+        return JsonResponse([], safe=False)

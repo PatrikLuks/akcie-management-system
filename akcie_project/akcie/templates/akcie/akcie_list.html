@@ -9,6 +9,17 @@
             <span>Počet: {{ akcie.pocet_ks }}</span>
             <span>Hodnota: {{ akcie.hodnota }} Kč</span>
             <span>Zisk/Ztráta: {{ akcie.zisk_ztrata }} Kč</span>
+            <span>Nákupní cena za kus: {{ akcie.cena_za_kus }} Kč</span>
+            <span>Datum nákupu: {{ akcie.datum }}</span>
+            <span>Aktuální cena za kus: 
+                {% if akcie.ticker %}
+                    {% with ticker=akcie.ticker %}
+                        {% include 'akcie/partials/aktualni_cena.html' %}
+                    {% endwith %}
+                {% else %}
+                    (zobrazena v poli Hodnota)
+                {% endif %}
+            </span>
             <a href="/akcie/{{ akcie.id }}/" class="details-link">Podrobnosti</a>
         </li>
     {% endfor %}
