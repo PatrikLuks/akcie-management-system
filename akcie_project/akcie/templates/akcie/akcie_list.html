@@ -1,40 +1,27 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
-  <div class="versailles-ornament"></div>
-  <h1 class="versailles-header">Seznam akcií</h1>
-  <hr class="versailles-divider">
-  <div class="lux-gold-box versailles-frame versailles-shadow" style="background:none;">
-    <a href="/akcie/create/" class="versailles-btn"><span class="lux-plus">＋</span> Přidat novou akcii</a>
-    <a href="/akcie/export/" class="versailles-btn">Exportovat akcie do CSV</a>
-    <a href="/akcie/import/" class="versailles-btn">Importovat akcie z CSV</a>
-    <a href="{% url 'export_excel' %}" class="versailles-btn">Exportovat do Excelu</a>
-  </div>
-  <div class="dashboard-container">
-    <div class="dashboard-grid">
-      {% for akcie in akcie %}
-        <div class="versailles-frame versailles-shadow" style="background:none;">
-          <h2 class="versailles-header" style="font-size:1.2em;">{{ akcie.nazev }}</h2>
-          <table class="versailles-table" style="margin-bottom:12px;">
-            <tr><th>Počet</th><td>{{ akcie.pocet_ks }}</td></tr>
-            <tr><th>Hodnota</th><td>{{ akcie.hodnota }} Kč</td></tr>
-            <tr><th>Zisk/Ztráta</th><td>{{ akcie.zisk_ztrata }} Kč</td></tr>
-            <tr><th>Nákupní cena za kus</th><td>{{ akcie.cena_za_kus }} Kč</td></tr>
-            <tr><th>Datum nákupu</th><td>{{ akcie.datum }}</td></tr>
-            <tr><th>Aktuální cena za kus</th><td>
-              {% if akcie.ticker %}
-                {% with ticker=akcie.ticker %}
-                  {% include 'akcie/partials/aktualni_cena.html' %}
-                {% endwith %}
-              {% else %}
-                (zobrazena v poli Hodnota)
-              {% endif %}
-            </td></tr>
-          </table>
-          <a href="/akcie/{{ akcie.id }}/" class="versailles-btn" style="width:100%;margin-bottom:8px;">Podrobnosti</a>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
+<h1>Seznam akcií</h1>
+<a href="/akcie/create/">Přidat novou akcii</a>
+<table>
+  <thead>
+    <tr>
+      <th>Název</th>
+      <th>Počet</th>
+      <th>Hodnota</th>
+      <th>Zisk/Ztráta</th>
+      <th>Akce</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for akcie in akcie %}
+    <tr>
+      <td>{{ akcie.nazev }}</td>
+      <td>{{ akcie.pocet_ks }}</td>
+      <td>{{ akcie.hodnota }} Kč</td>
+      <td>{{ akcie.zisk_ztrata }} Kč</td>
+      <td><a href="/akcie/{{ akcie.id }}/">Detail</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

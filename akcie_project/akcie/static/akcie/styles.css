@@ -1,349 +1,228 @@
-/* Luxusní černá-zlatá-bílá paleta pro celý projekt */
-body {
-    font-family: 'Inter', 'Roboto', Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #181818 0%, #232323 100%);
-    color: #fff;
-    min-height: 100vh;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap');
 
+:root {
+  --lux-black: #181818;
+  --lux-dark: #232323;
+  --lux-gold: #bfa14a;
+  --lux-gold-light: #fffbe6;
+  --lux-white: #fff;
+  --lux-shadow: 0 4px 24px rgba(191,161,74,0.10);
+  --lux-radius: 16px;
+}
+body {
+  background: linear-gradient(135deg, var(--lux-black) 0%, var(--lux-dark) 100%);
+  color: var(--lux-white);
+  font-family: 'Inter', Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+}
 nav {
-    background: #181818;
-    color: #fff;
-    padding: 10px 0;
-    border-bottom: 2px solid #bfa14a;
+  background: var(--lux-black);
+  color: var(--lux-white);
+  box-shadow: 0 2px 8px rgba(191,161,74,0.07);
+  border-bottom: 2px solid var(--lux-gold);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 nav ul {
-    list-style: none;
-    display: flex;
-    gap: 18px;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-    background: none;
-    border: none;
-}
-nav ul li {
-    display: inline-block;
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 18px 0;
 }
 nav ul li a {
-    color: #fff !important;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    font-size: 1.08em;
-    padding: 8px 18px;
-    border-radius: 8px;
-    transition: color 0.2s, background 0.2s;
-    background: none;
-    border: none;
-    text-decoration: none;
-    display: inline-block;
+  color: var(--lux-white);
+  font-weight: 600;
+  font-size: 1.08em;
+  padding: 10px 22px;
+  border-radius: var(--lux-radius);
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  letter-spacing: 0.01em;
 }
 nav ul li a:hover, nav ul li a.active {
-    color: #bfa14a !important;
-    background: #232323;
-    text-decoration: underline;
+  color: var(--lux-gold);
+  background: var(--lux-dark);
 }
-
 h1, h2, h3, .dashboard-title {
-    color: #fff;
-    font-weight: 800;
-    letter-spacing: 0.01em;
+  color: var(--lux-gold-light);
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-bottom: 18px;
 }
-
-.card, .dashboard-card, .premium-akcie-detail, .dashboard-container {
-    background: #232323;
-    border-radius: 18px;
-    border: 1.5px solid #bfa14a;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
-    color: #fff;
+.card, .dashboard-card, .lux-card, .premium-akcie-detail, .dashboard-container, .versailles-frame, main {
+  background: var(--lux-dark);
+  border-radius: var(--lux-radius);
+  /* border: 2px solid var(--lux-gold); */
+  box-shadow: var(--lux-shadow);
+  margin: 32px 0;
+  padding: 32px 3vw;
+  width: 100%;
+  max-width: none;
+  position: relative;
+  box-sizing: border-box;
 }
-
-.button, button, input[type="submit"] {
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
-    color: #181818 !important;
-    border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    padding: 12px 28px;
-    font-size: 1.08em;
-    box-shadow: 0 2px 8px rgba(191,161,74,0.13);
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+.lux-card, .card, .dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
 }
-.button:hover, button:hover, input[type="submit"]:hover {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
-    color: #181818 !important;
-    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
-    transform: scale(1.04);
+.button, button, input[type="submit"], .versailles-btn {
+  background: var(--lux-gold);
+  color: var(--lux-black);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  padding: 14px 32px;
+  font-size: 1.08em;
+  box-shadow: 0 2px 8px rgba(191,161,74,0.13);
+  margin: 18px 0 18px 0;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s;
+  cursor: pointer;
+  display: inline-block;
 }
-
-.button-attractive {
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
-    color: #181818 !important;
-    font-weight: 800;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
-    border: 2px solid #bfa14a;
+.button:hover, button:hover, input[type="submit"]:hover, .versailles-btn:hover {
+  background: var(--lux-gold-light);
+  color: var(--lux-black);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 24px rgba(191,161,74,0.18);
 }
-.button-attractive:hover {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
-    color: #181818 !important;
+.versailles-btn + .versailles-btn, .button + .button, button + button {
+  margin-left: 12px;
 }
-
 input, select, textarea {
-    border-radius: 7px;
-    border: 1.5px solid #bfa14a;
-    padding: 10px 12px;
-    font-size: 1em;
-    background: #181818;
-    color: #fff;
-    margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--lux-gold);
+  padding: 12px 14px;
+  font-size: 1em;
+  background: var(--lux-black);
+  color: var(--lux-white);
+  margin-bottom: 12px;
+  transition: border 0.2s;
 }
 input:focus, select:focus, textarea:focus {
-    outline: 2.5px solid #bfa14a;
-    background: #232323;
-    color: #fff;
+  outline: 2.5px solid var(--lux-gold);
+  background: var(--lux-dark);
+  color: var(--lux-white);
 }
-
-/* Luxusní tabulky */
-table, .premium-table {
-    border-radius: 12px;
-    overflow: hidden;
-    background: #181818;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(191,161,74,0.04);
+table, .premium-table, .versailles-table {
+  background: var(--lux-black);
+  color: var(--lux-white);
+  /* border: 2px solid var(--lux-gold); */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(191,161,74,0.04);
+  width: 100%;
+  margin-bottom: 18px;
+  font-size: 1em;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-table th, .premium-table th {
-    background: #232323;
-    color: #bfa14a;
-    font-weight: 800;
-    border-bottom: 2px solid #bfa14a;
+table th, .premium-table th, .versailles-table th {
+  background: var(--lux-dark);
+  color: var(--lux-gold);
+  font-weight: 800;
+  /* border-bottom: 2px solid var(--lux-gold); */
 }
-table td, .premium-table td {
-    padding: 13px 16px;
-    border: 1px solid #bfa14a;
+table td, .premium-table td, .versailles-table td {
+  /* border: 1px solid var(--lux-gold); */
+  padding: 14px 16px;
+  box-sizing: border-box;
 }
 table tr:nth-child(even), .premium-table tr:nth-child(even) {
-    background: #232323;
+  background: var(--lux-dark);
 }
 table tr:hover, .premium-table tr:hover {
-    background: #bfa14a;
-    color: #181818;
+  background: var(--lux-gold-light);
+  color: var(--lux-black);
 }
-
-/* Luxusní notifikace */
-.notification {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
-    color: #181818;
-    padding: 16px 32px;
-    border-radius: 10px;
-    font-size: 1.1em;
-    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
-    z-index: 9999;
-    animation: fadeIn 0.5s;
-}
-@keyframes fadeIn {
-    from { opacity: 0; right: 0; }
-    to { opacity: 1; right: 24px; }
-}
-
-/* Luxusní box */
-.lux-gold-box {
-    position: relative;
-    border: 4px double #bfa14a;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.18), 0 0 0 8px #232323, 0 0 0 12px #bfa14a;
-    background: repeating-linear-gradient(135deg, #181818 0 18px, #232323 18px 36px);
-    overflow: visible;
-    border: 3px solid #bfa14a;
-    border-radius: 18px;
-    background-image: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="0" width="4" height="40" fill="%23bfa14a" fill-opacity="0.08"/><rect x="0" y="18" width="40" height="4" fill="%23bfa14a" fill-opacity="0.08"/><circle cx="20" cy="20" r="8" stroke="%23bfa14a" stroke-width="1.2" fill="none" fill-opacity="0.08"/></svg>');
-    background-size: 40px 40px, auto;
-    background-blend-mode: lighten;
-    box-shadow: 0 4px 24px rgba(191,161,74,0.13);
-    padding: 24px 18px;
-    margin: 32px auto 36px auto;
-    max-width: 1100px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    justify-content: center;
-    align-items: center;
-}
-.lux-gold-box::before, .lux-gold-box::after {
-    content: '';
-    position: absolute;
-    left: 18px; right: 18px;
-    height: 8px;
-    border-top: 2px solid #bfa14a;
-    border-bottom: 2px solid #bfa14a;
-    border-radius: 8px;
-    top: -16px;
-    background: linear-gradient(90deg, transparent 0%, #bfa14a 50%, transparent 100%);
-    z-index: 1;
-}
-.lux-gold-box::after {
-    top: auto;
-    bottom: -16px;
-}
-@media (max-width: 700px) {
-  .lux-gold-box {
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px 6px;
-  }
-}
-
-.lux-gold-box .button-attractive,
-.lux-gold-box .button-attractive:visited,
-.lux-gold-box .button-attractive:active,
-.lux-gold-box .button-attractive:focus {
-    background: #bfa14a !important;
-    color: #181818 !important;
-    border: 3.5px double #fffbe6 !important;
-    border-radius: 14px;
-    font-family: 'EB Garamond', 'Georgia', serif;
-    font-weight: 900;
-    font-size: 1.18em;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    box-shadow: 0 4px 24px rgba(191,161,74,0.18), 0 0 0 2px #bfa14a;
-    padding: 14px 36px;
-    margin: 0 8px;
-    position: relative;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
-}
-.lux-gold-box .button-attractive:hover {
-    background: #fffbe6 !important;
-    color: #bfa14a !important;
-    border: 3.5px double #bfa14a !important;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.22), 0 0 0 2px #fffbe6;
-}
-.lux-gold-box .lux-plus {
-    color: #bfa14a !important;
-    font-size: 1.35em;
-    font-weight: bold;
-    font-family: 'EB Garamond', 'Georgia', serif;
-    vertical-align: -2px;
-}
-/* Pilastry (vertikální ornamenty) */
-.lux-gold-box .button-attractive::before, .lux-gold-box .button-attractive::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 8px; bottom: 8px;
-    width: 4px;
-}
-
-input:focus, select:focus, textarea:focus, .button:focus, button:focus {
-    outline: 2.5px solid #bfa14a;
-    outline-offset: 2px;
-    background: #232323;
-    color: #fff;
-}
-
 ::-webkit-scrollbar {
-    width: 10px;
-    background: #181818;
+  width: 10px;
+  background: var(--lux-black);
 }
 ::-webkit-scrollbar-thumb {
-    background: #bfa14a;
-    border-radius: 8px;
+  background: var(--lux-gold);
+  border-radius: 8px;
 }
-
-/* Versailles motivy */
-.versailles-bg {
-    background: linear-gradient(135deg, #181818 0%, #232323 100%), url('https://www.transparenttextures.com/patterns/gold-fibers.png');
-    background-blend-mode: overlay;
+.dashboard-grid, .dashboard-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
 }
-.versailles-frame {
-    border: 6px double #bfa14a;
-    border-radius: 32px;
-    box-shadow: 0 8px 48px rgba(191,161,74,0.25), 0 2px 8px #181818;
-    background: linear-gradient(120deg, #232323 80%, #bfa14a 100%);
-    padding: 32px 28px;
-    margin: 36px auto;
-    max-width: 1200px;
-    position: relative;
+.dashboard-grid > *, .dashboard-container > * {
+  min-width: 280px;
+  flex: 1 1 340px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
-.versailles-header {
-    font-family: 'Playfair Display', 'Times New Roman', serif;
-    font-size: 2.7em;
-    color: #bfa14a;
-    letter-spacing: 0.04em;
-    text-shadow: 0 2px 12px #fffbe6, 0 1px 0 #bfa14a;
-    margin-bottom: 18px;
+#user-stocks ul, .dashboard-grid ul {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 0;
+  margin: 0;
+}
+#user-stocks li, .dashboard-grid li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .dashboard-grid, .dashboard-container {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .card, .dashboard-card, .versailles-frame, main {
+    max-width: 100vw;
+    padding: 12px 2vw;
+  }
+}
+@media (max-width: 600px) {
+  .dashboard-grid, .dashboard-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card, .dashboard-card, .lux-card {
+    padding: 8vw 2vw;
+    min-width: 0;
+    max-width: 100vw;
+  }
+  .button, button, input[type="submit"], .versailles-btn {
+    width: 100%;
+    margin: 14px 0;
     text-align: center;
-    position: relative;
+  }
 }
-.versailles-ornament {
-    width: 80px;
-    height: 32px;
-    margin: 0 auto 18px auto;
-    background: url('https://svgshare.com/i/15kA.svg') no-repeat center/contain;
-    opacity: 0.85;
+canvas {
+  margin: 20px 0 10px 0;
+  background: var(--lux-black);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(191,161,74,0.07);
+  padding: 10px;
+  max-width: 100%;
+  border: 2px solid var(--lux-gold);
 }
-.versailles-divider {
-    border: none;
-    border-top: 3px double #bfa14a;
-    margin: 24px 0 32px 0;
-    height: 0;
-}
-.versailles-table {
-    background: #181818;
-    border: 3px solid #bfa14a;
-    border-radius: 18px;
-    box-shadow: 0 2px 16px rgba(191,161,74,0.13);
-    color: #fff;
-    font-family: 'Playfair Display', 'Times New Roman', serif;
-    font-size: 1.13em;
-}
-.versailles-table th {
-    background: #232323;
-    color: #bfa14a;
-    font-size: 1.08em;
-    border-bottom: 2px solid #bfa14a;
-}
-.versailles-table td {
-    border: 1.5px solid #bfa14a;
-    padding: 13px 18px;
-}
-.versailles-btn {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%) !important;
-    color: #181818 !important;
-    border: 3px solid #bfa14a !important;
-    border-radius: 16px;
-    font-family: 'Playfair Display', 'Times New Roman', serif;
-    font-weight: 900;
-    font-size: 1.18em;
-    letter-spacing: 0.06em;
-    box-shadow: 0 4px 24px rgba(191,161,74,0.18);
-    padding: 14px 36px;
-    margin: 8px 12px;
-    text-transform: uppercase;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.versailles-btn:hover {
-    background: #bfa14a !important;
-    color: #fffbe6 !important;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.22);
-}
-.versailles-shadow {
-    box-shadow: 0 8px 48px rgba(191,161,74,0.25), 0 2px 8px #181818;
-}
-.versailles-font {
-    font-family: 'Playfair Display', 'Times New Roman', serif;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
-
-body.versailles {
-    background: linear-gradient(135deg, #181818 0%, #232323 100%), url('https://www.transparenttextures.com/patterns/gold-fibers.png');
-    background-blend-mode: overlay;
+.alert, .notification {
+  background: var(--lux-gold);
+  color: var(--lux-black);
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 1.1em;
+  box-shadow: 0 4px 16px rgba(191,161,74,0.18);
+  margin: 24px auto;
+  max-width: 600px;
+  text-align: center;
 }

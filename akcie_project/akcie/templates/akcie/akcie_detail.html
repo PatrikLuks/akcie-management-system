@@ -1,124 +1,47 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
-  <div class="versailles-ornament"></div>
-  <h1 class="versailles-header">Detail akcie: {{ akcie.nazev }}</h1>
-  <hr class="versailles-divider">
-  <div class="versailles-frame versailles-shadow" style="background:none; margin-bottom:32px;">
-    <div class="akcie-detail-grid">
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Počet kusů</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.pocet_ks }}</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Aktuální hodnota</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.hodnota|floatformat:2 }} Kč</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Nákupní cena za kus</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.cena_za_kus|floatformat:2 }} Kč</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Celkový nákup</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.nakup|floatformat:2 }} Kč</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Zisk / Ztráta</h2>
-        <div class="akcie-detail-value versailles-font {% if akcie.zisk_ztrata >= 0 %}profit{% else %}loss{% endif %}">
-          {{ akcie.zisk_ztrata|floatformat:2 }} Kč
-        </div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Celková dividenda</h2>
-        <div class="akcie-detail-value versailles-font">{{ total_dividendy|floatformat:2 }} Kč</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Datum nákupu</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.datum }}</div>
-      </div>
-      <div>
-        <h2 class="versailles-header" style="font-size:1.1em;">Čas nákupu</h2>
-        <div class="akcie-detail-value versailles-font">{{ akcie.cas }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="versailles-frame versailles-shadow" style="background:none; margin-bottom:32px;">
-    <h2 class="versailles-header" style="font-size:1.1em;">Transakce</h2>
-    <table class="versailles-table">
-      <thead>
-        <tr>
-          <th>Typ</th>
-          <th>Množství</th>
-          <th>Cena</th>
-          <th>Datum</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for transakce in transakce %}
-        <tr>
-          <td>{{ transakce.typ|title }}</td>
-          <td>{{ transakce.mnozstvi }}</td>
-          <td>{{ transakce.cena|floatformat:2 }} Kč</td>
-          <td>{{ transakce.datum }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4">Žádné transakce</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <div class="versailles-frame versailles-shadow" style="background:none;">
-    <h2 class="versailles-header" style="font-size:1.1em;">Dividendy</h2>
-    <table class="versailles-table">
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Částka (Kč)</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for dividenda in dividendy %}
-        <tr>
-          <td>{{ dividenda.datum }}</td>
-          <td>{{ dividenda.castka|floatformat:2 }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="2">Žádné dividendy</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <canvas id="akcieChart" width="400" height="120" class="lux-chart versailles-frame versailles-shadow"></canvas>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('akcieChart').getContext('2d');
-    const data = {
-        labels: [{% for dividenda in dividendy %}'{{ dividenda.datum }}',{% endfor %}],
-        datasets: [{
-            label: 'Dividendy',
-            data: [{% for dividenda in dividendy %}{{ dividenda.castka }},{% endfor %}],
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            tension: 0.3,
-            pointRadius: 4,
-            pointBackgroundColor: '#007bff',
-        }]
-    };
-    new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: {
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-});
-</script>
+<h1>Detail akcie: {{ akcie.nazev }}</h1>
+<table>
+  <tr><th>Počet kusů</th><td>{{ akcie.pocet_ks }}</td></tr>
+  <tr><th>Aktuální hodnota</th><td>{{ akcie.hodnota|floatformat:2 }} Kč</td></tr>
+  <tr><th>Nákupní cena za kus</th><td>{{ akcie.cena_za_kus|floatformat:2 }} Kč</td></tr>
+  <tr><th>Celkový nákup</th><td>{{ akcie.nakup|floatformat:2 }} Kč</td></tr>
+  <tr><th>Zisk / Ztráta</th><td>{{ akcie.zisk_ztrata|floatformat:2 }} Kč</td></tr>
+  <tr><th>Datum nákupu</th><td>{{ akcie.datum }}</td></tr>
+  <tr><th>Čas nákupu</th><td>{{ akcie.cas }}</td></tr>
+</table>
+<h2>Transakce</h2>
+<table>
+  <thead>
+    <tr><th>Typ</th><th>Množství</th><th>Cena</th><th>Datum</th></tr>
+  </thead>
+  <tbody>
+    {% for transakce in transakce %}
+    <tr>
+      <td>{{ transakce.typ|title }}</td>
+      <td>{{ transakce.mnozstvi }}</td>
+      <td>{{ transakce.cena|floatformat:2 }} Kč</td>
+      <td>{{ transakce.datum }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">Žádné transakce</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h2>Dividendy</h2>
+<table>
+  <thead>
+    <tr><th>Datum</th><th>Částka (Kč)</th></tr>
+  </thead>
+  <tbody>
+    {% for dividenda in dividendy %}
+    <tr>
+      <td>{{ dividenda.datum }}</td>
+      <td>{{ dividenda.castka|floatformat:2 }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2">Žádné dividendy</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

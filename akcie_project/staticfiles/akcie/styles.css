@@ -1,46 +1,72 @@
-/* Luxusní černá-zlatá-bílá paleta pro celý projekt */
-body {
+body, .versailles-bg, body.versailles {
+    background: #181818 !important;
+    color: #fff !important;
     font-family: 'Inter', 'Roboto', Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #181818 0%, #232323 100%);
-    color: #fff;
     min-height: 100vh;
 }
 
 nav {
-    background: #181818;
-    color: #fff;
+    background: #181818 !important;
+    color: #fff !important;
     padding: 10px 0;
-    border-bottom: 2px solid #bfa14a;
+    border: none !important;
+    box-shadow: none !important;
 }
-nav ul li a, nav a {
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 10px 0;
+    background: none;
+    border: none;
+}
+nav ul li {
+    display: inline-block;
+}
+nav ul li a {
     color: #fff !important;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    transition: color 0.2s;
+    font-size: 1.08em;
+    padding: 8px 18px;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+    background: none;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
 }
-nav ul li a:hover, nav a:hover {
+nav ul li a:hover, nav ul li a.active {
     color: #bfa14a !important;
-    text-decoration: underline;
+    background: #232323 !important;
 }
 
-h1, h2, h3, .dashboard-title {
-    color: #fff;
+h1, h2, h3, .dashboard-title, .versailles-header {
+    color: #fff !important;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
     font-weight: 800;
+    font-size: 2em;
     letter-spacing: 0.01em;
+    margin-bottom: 18px;
+    text-shadow: none;
 }
 
-.card, .dashboard-card, .premium-akcie-detail, .dashboard-container {
-    background: #232323;
-    border-radius: 18px;
-    border: 1.5px solid #bfa14a;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
-    color: #fff;
+.card, .dashboard-card, .premium-akcie-detail, .dashboard-container, .versailles-frame {
+    background: #232323 !important;
+    border-radius: 18px !important;
+    border: 2px solid #bfa14a !important;
+    box-shadow: 0 4px 16px rgba(191,161,74,0.10);
+    margin: 24px auto;
+    padding: 24px 18px;
+    max-width: 900px;
+    width: 100%;
+    position: relative;
 }
 
-.button, button, input[type="submit"] {
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
+.button, button, input[type="submit"], .versailles-btn {
+    background: #bfa14a !important;
     color: #181818 !important;
     border: none;
     border-radius: 8px;
@@ -48,25 +74,11 @@ h1, h2, h3, .dashboard-title {
     padding: 12px 28px;
     font-size: 1.08em;
     box-shadow: 0 2px 8px rgba(191,161,74,0.13);
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    margin: 8px 0;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
-.button:hover, button:hover, input[type="submit"]:hover {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
-    color: #181818 !important;
-    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
-    transform: scale(1.04);
-}
-
-.button-attractive {
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
-    color: #181818 !important;
-    font-weight: 800;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(191,161,74,0.18);
-    border: 2px solid #bfa14a;
-}
-.button-attractive:hover {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%);
+.button:hover, button:hover, input[type="submit"]:hover, .versailles-btn:hover {
+    background: #fffbe6 !important;
     color: #181818 !important;
 }
 
@@ -85,23 +97,25 @@ input:focus, select:focus, textarea:focus {
     color: #fff;
 }
 
-/* Luxusní tabulky */
-table, .premium-table {
-    border-radius: 12px;
-    overflow: hidden;
-    background: #181818;
-    color: #fff;
+table, .premium-table, .versailles-table {
+    background: #181818 !important;
+    color: #fff !important;
+    border: 2px solid #bfa14a !important;
+    border-radius: 12px !important;
     box-shadow: 0 2px 8px rgba(191,161,74,0.04);
+    width: 100%;
+    margin-bottom: 18px;
+    font-size: 1em;
 }
-table th, .premium-table th {
-    background: #232323;
-    color: #bfa14a;
-    font-weight: 800;
+table th, .premium-table th, .versailles-table th {
+    background: #232323 !important;
+    color: #fff !important;
+    font-weight: 700;
     border-bottom: 2px solid #bfa14a;
 }
-table td, .premium-table td {
-    padding: 13px 16px;
+table td, .premium-table td, .versailles-table td {
     border: 1px solid #bfa14a;
+    padding: 12px 14px;
 }
 table tr:nth-child(even), .premium-table tr:nth-child(even) {
     background: #232323;
@@ -111,12 +125,11 @@ table tr:hover, .premium-table tr:hover {
     color: #181818;
 }
 
-/* Luxusní notifikace */
 .notification {
     position: fixed;
     top: 24px;
     right: 24px;
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%);
+    background: #bfa14a !important;
     color: #181818;
     padding: 16px 32px;
     border-radius: 10px;
@@ -130,129 +143,47 @@ table tr:hover, .premium-table tr:hover {
     to { opacity: 1; right: 24px; }
 }
 
-/* Luxusní box */
-.lux-gold-box {
-    border: 3px solid #bfa14a;
-    border-radius: 18px;
-    background: linear-gradient(90deg, #181818 0%, #232323 100%);
-    box-shadow: 0 4px 24px rgba(191,161,74,0.13);
-    padding: 24px 18px;
-    margin: 32px auto 36px auto;
-    max-width: 1100px;
-    display: flex;
+.lux-chart, canvas {
+    background: #181818 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(191,161,74,0.10);
+    border: 2px solid #bfa14a !important;
+    padding: 0;
+    max-width: 100%;
+    margin: 18px 0 10px 0;
+}
+
+.versailles-ornament, .versailles-divider, .lux-gold-box, .versailles-shadow {
+    display: none !important;
+}
+
+.dashboard-grid, .dashboard-container {
+    display: flex !important;
     flex-wrap: wrap;
-    gap: 18px;
+    gap: 32px;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
 }
-@media (max-width: 700px) {
-  .lux-gold-box {
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px 6px;
-  }
-}
-
-.lux-gold-box .button-attractive {
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%) !important;
-    color: #bfa14a !important;
-    border: 3px solid #bfa14a !important;
-    font-weight: 900;
-    font-size: 1.13em;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    box-shadow: 0 4px 24px rgba(191,161,74,0.18);
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    text-shadow: 0 1px 8px #fffbe6, 0 0px 2px #bfa14a;
-}
-.lux-gold-box .button-attractive:hover {
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%) !important;
-    color: #bfa14a !important;
-    border-color: #bfa14a !important;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.22);
-    text-shadow: 0 1px 8px #bfa14a, 0 0px 2px #fffbe6;
-}
-.lux-gold-box .lux-plus {
-    color: #bfa14a !important;
-    font-size: 1.3em;
-    font-weight: bold;
-    text-shadow: 0 1px 8px #fffbe6, 0 0px 2px #bfa14a;
-}
-
-.lux-gold-box .button-attractive,
-.lux-gold-box .button-attractive:visited,
-.lux-gold-box .button-attractive:active,
-.lux-gold-box .button-attractive:focus,
-.lux-gold-box .button-attractive:hover,
-.lux-gold-box a.button-attractive,
-.lux-gold-box button.button-attractive,
-.lux-gold-box input.button-attractive[type="submit"] {
-    color: #bfa14a !important;
-    background: linear-gradient(90deg, #fffbe6 0%, #bfa14a 100%) !important;
-    border: 3px solid #bfa14a !important;
-    font-weight: 900;
-    font-size: 1.13em;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    box-shadow: 0 4px 24px rgba(191,161,74,0.18);
-    text-shadow: 0 1px 8px #fffbe6, 0 0px 2px #bfa14a;
-}
-.lux-gold-box .button-attractive:hover,
-.lux-gold-box a.button-attractive:hover,
-.lux-gold-box button.button-attractive:hover,
-.lux-gold-box input.button-attractive[type="submit"]:hover {
-    color: #fffbe6 !important;
-    background: linear-gradient(90deg, #bfa14a 0%, #fffbe6 100%) !important;
-    border-color: #bfa14a !important;
-    box-shadow: 0 8px 32px rgba(191,161,74,0.22);
-    text-shadow: 0 1px 8px #bfa14a, 0 0px 2px #fffbe6;
-}
-
-/* Animace, microinterakce, responsivita */
-.button, button, input[type="submit"] {
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-}
-.button:active, button:active, input[type="submit"]:active {
-    transform: scale(0.97);
-}
-.card, .dashboard-card {
-    transition: box-shadow 0.2s, transform 0.2s;
-}
-.card:hover, .dashboard-card:hover {
-    box-shadow: 0 12px 32px rgba(191,161,74,0.18);
-    transform: translateY(-2px) scale(1.01);
-}
-table tr {
-    transition: background 0.15s, color 0.15s;
+.dashboard-grid > *, .dashboard-container > * {
+    min-width: 280px;
+    flex: 1 1 340px;
+    max-width: 480px;
 }
 
 @media (max-width: 900px) {
-    .dashboard-card, .card, table, .dashboard-container {
-        padding: 12px 6px;
-        font-size: 0.98em;
-    }
-    table th, table td {
-        padding: 7px 6px;
-    }
-}
-@media (max-width: 600px) {
-    .dashboard-card, .card, .dashboard-container {
-        padding: 6px 2px;
-        font-size: 0.93em;
-    }
-    table th, table td {
-        padding: 4px 2px;
-    }
-    .dashboard-title, h1, h2, h3 {
-        font-size: 1.1em;
-    }
+  .dashboard-grid, .dashboard-container {
+    flex-direction: column !important;
+    gap: 18px;
+  }
+  .versailles-frame, .dashboard-card, .card, .premium-akcie-detail {
+    max-width: 98vw;
+    padding: 12px 4vw;
+  }
 }
 
-input:focus, select:focus, textarea:focus, .button:focus, button:focus {
-    outline: 2.5px solid #bfa14a;
-    outline-offset: 2px;
-    background: #232323;
-    color: #fff;
+.bfa14a, .gold, .versailles-header, .stock-meta, .lux-plus {
+    color: #fff !important;
+    font-weight: 700;
 }
 
 ::-webkit-scrollbar {
@@ -263,3 +194,5 @@ input:focus, select:focus, textarea:focus, .button:focus, button:focus {
     background: #bfa14a;
     border-radius: 8px;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');

@@ -1,58 +1,44 @@
 {% extends 'akcie/base.html' %}
 
 {% block content %}
-<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
-  <div class="versailles-ornament"></div>
-  <h1 class="versailles-header">Dashboard</h1>
-  <hr class="versailles-divider">
-  <form method="get" action="" class="versailles-frame versailles-shadow" style="max-width: 500px; margin: 0 auto 24px auto; background:none;">
-    <input type="text" name="q" placeholder="Hledat..." value="{{ query|default_if_none:'' }}">
-    <button type="submit" class="versailles-btn" style="margin-left:12px;">Filtrovat</button>
-  </form>
-  <div class="dashboard-grid">
-    <div class="versailles-frame versailles-shadow" style="background:none;">
-      <h2 class="versailles-header" style="font-size:1.2em;">Počet akcií</h2>
-      <p class="versailles-font">{{ total_akcie }}</p>
-    </div>
-    <div class="versailles-frame versailles-shadow" style="background:none;">
-      <h2 class="versailles-header" style="font-size:1.2em;">Počet transakcí</h2>
-      <p class="versailles-font">{{ total_transakce }}</p>
-    </div>
-    <div class="versailles-frame versailles-shadow" style="background:none;">
-      <h2 class="versailles-header" style="font-size:1.2em;">Celková částka dividend</h2>
-      <p class="versailles-font">{{ total_dividendy }} Kč</p>
-    </div>
-    <div class="versailles-frame versailles-shadow" style="background:none;">
-      <h3 class="versailles-header" style="font-size:1.1em;">Celková hodnota investic</h3>
-      <p class="versailles-font">{{ total_hodnota }} Kč</p>
-    </div>
-    <div class="versailles-frame versailles-shadow" style="background:none;">
-      <h3 class="versailles-header" style="font-size:1.1em;">Celkový zisk/ztráta</h3>
-      <p class="versailles-font">{{ total_zisk_ztrata }} Kč</p>
-    </div>
+<h1>Dashboard</h1>
+<form method="get" action="">
+  <input type="text" name="q" placeholder="Hledat..." value="{{ query|default_if_none:'' }}">
+  <button type="submit">Filtrovat</button>
+</form>
+<div class="dashboard-grid">
+  <div>
+    <h2>Počet akcií</h2>
+    <p>{{ total_akcie }}</p>
   </div>
-  <div style="margin: 32px 0 0 0; text-align:center;">
-    <a href="{% url 'export_dashboard_pdf' %}" class="versailles-btn">Exportovat do PDF</a>
-    <a href="{% url 'export_dashboard_graphs_pdf' %}" class="versailles-btn" style="margin-left: 12px;">Exportovat grafy do PDF</a>
+  <div>
+    <h2>Počet transakcí</h2>
+    <p>{{ total_transakce }}</p>
   </div>
-  <div class="dashboard-charts versailles-frame versailles-shadow" style="margin-top: 40px; background:none;">
-    <canvas id="dividendyChart" width="400" height="200"></canvas>
-    <canvas id="transakceChart" width="400" height="200"></canvas>
-    <canvas id="akcieChart" width="400" height="200"></canvas>
-    <canvas id="investiceChart" width="400" height="200"></canvas>
-    <canvas id="transakceMonthlyChart" width="400" height="200"></canvas>
-    <canvas id="investmentTrends" width="400" height="200"></canvas>
+  <div>
+    <h2>Celková částka dividend</h2>
+    <p>{{ total_dividendy }} Kč</p>
   </div>
+  <div>
+    <h2>Celková hodnota investic</h2>
+    <p>{{ total_hodnota }} Kč</p>
+  </div>
+  <div>
+    <h2>Celkový zisk/ztráta</h2>
+    <p>{{ total_zisk_ztrata }} Kč</p>
+  </div>
+</div>
+<div>
+  <canvas id="dividendyChart" width="400" height="200"></canvas>
+  <canvas id="transakceChart" width="400" height="200"></canvas>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 function luxGold(i) {
-  // Alternuje mezi zlatou, bílou a černou
   const palette = ['#bfa14a', '#fff', '#181818', '#232323'];
   return palette[i % palette.length];
 }
 document.addEventListener('DOMContentLoaded', function() {
-    // Dividendy chart
     const ctx = document.getElementById('dividendyChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -71,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } }
         }
     });
-    // Transakce chart
     const transakceCtx = document.getElementById('transakceChart').getContext('2d');
     new Chart(transakceCtx, {
         type: 'pie',
@@ -86,94 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }]
         },
         options: { plugins: { legend: { labels: { color: luxGold(1) } } } }
-    });
-    // Akcie chart
-    const akcieCtx = document.getElementById('akcieChart').getContext('2d');
-    new Chart(akcieCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ akcie_pocet|map(attribute='nazev')|join:","|safe }},
-            datasets: [{
-                label: 'Počet akcií',
-                data: {{ akcie_pocet|map(attribute='count')|join:","|safe }},
-                backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
-                borderColor: luxGold(1),
-                borderWidth: 2
-            }]
-        },
-        options: { plugins: { legend: { labels: { color: luxGold(1) } } }, scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } } }
-    });
-    // Investice chart
-    const investiceCtx = document.getElementById('investiceChart').getContext('2d');
-    new Chart(investiceCtx, {
-        type: 'pie',
-        data: {
-            labels: [{% for akcie in akcie_data %}'{{ akcie.nazev }}',{% endfor %}],
-            datasets: [{
-                label: 'Hodnota investic',
-                data: [{% for akcie in akcie_data %}{{ akcie.hodnota }},{% endfor %}],
-                backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
-                borderColor: luxGold(1),
-                borderWidth: 2
-            }]
-        },
-        options: { plugins: { legend: { labels: { color: luxGold(1) } } } }
-    });
-    // Transakce monthly chart
-    const transakceMonthlyCtx = document.getElementById('transakceMonthlyChart').getContext('2d');
-    new Chart(transakceMonthlyCtx, {
-        type: 'bar',
-        data: {
-            labels: [{% for item in transakce_monthly %}'{{ item.month|date:"F Y" }}',{% endfor %}],
-            datasets: [{
-                label: 'Počet transakcí',
-                data: [{% for item in transakce_monthly %}{{ item.count }},{% endfor %}],
-                backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
-                borderColor: luxGold(1),
-                borderWidth: 2
-            }]
-        },
-        options: { plugins: { legend: { labels: { color: luxGold(1) } } }, scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } } }
-    });
-    // Dividend by stock chart
-    const dividendyCtx = document.getElementById('dividendyChart').getContext('2d');
-    new Chart(dividendyCtx, {
-        type: 'bar',
-        data: {
-            labels: [{% for item in dividendy_data %}'{{ item.akcie__nazev }}',{% endfor %}],
-            datasets: [{
-                label: 'Celková částka dividend',
-                data: [{% for item in dividendy_data %}{{ item.total_castka }},{% endfor %}],
-                backgroundColor: [luxGold(0), luxGold(1), luxGold(2), luxGold(3)],
-                borderColor: luxGold(1),
-                borderWidth: 2
-            }]
-        },
-        options: { plugins: { legend: { labels: { color: luxGold(1) } } }, scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } }
-        }
-    });
-    // Investment trends chart
-    const investmentTrendsCtx = document.getElementById('investmentTrends').getContext('2d');
-    new Chart(investmentTrendsCtx, {
-        type: 'line',
-        data: {
-            labels: {{ months|safe }},
-            datasets: [{
-                label: 'Investiční trendy',
-                data: {{ investment_data|safe }},
-                borderColor: luxGold(0),
-                borderWidth: 2,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top', labels: { color: luxGold(1) } },
-                title: { display: true, text: 'Investiční trendy za poslední rok', color: luxGold(1) }
-            },
-            scales: { x: { ticks: { color: luxGold(1) } }, y: { ticks: { color: luxGold(1) } } }
-        }
     });
 });
 </script>

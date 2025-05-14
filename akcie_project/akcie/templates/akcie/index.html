@@ -1,215 +1,71 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<div class="versailles-frame versailles-shadow" style="margin-top: 32px;">
-  <div class="versailles-ornament"></div>
-  <h1 class="versailles-header">Přehled portfolia</h1>
-  <hr class="versailles-divider">
-  <div class="dashboard-grid">
-    <div class="versailles-frame versailles-shadow" style="background: none;">
-      <h2 class="versailles-header" style="font-size:1.3em;">Vaše akcie</h2>
-      <div id="user-stocks" class="stock-list">
-        {% if user_stocks %}
-        <ul style="padding:0;list-style:none;">
-          {% for stock in user_stocks %}
-            <li class="stock-item lux-stock-item versailles-frame versailles-shadow" style="margin-bottom:18px;">
-              <div>
-                <strong>{{ stock.nazev }}</strong><br>
-                <span class="stock-meta">{{ stock.cena_za_kus }} Kč/ks</span><br>
-                <span class="stock-meta">Hodnota: {{ stock.hodnota }} Kč</span>
-              </div>
+<h1 class="dashboard-title">Přehled portfolia</h1>
+<div class="dashboard-grid">
+  <div class="card">
+    <h2>Vaše akcie</h2>
+    <div id="user-stocks">
+      {% if user_stocks %}
+      <ul style="padding:0;list-style:none;">
+        {% for stock in user_stocks %}
+          <li class="lux-card" style="margin-bottom:18px;">
+            <div>
+              <strong>{{ stock.nazev }}</strong><br>
+              <span class="stock-meta">{{ stock.cena_za_kus }} Kč/ks</span><br>
+              <span class="stock-meta">Hodnota: {{ stock.hodnota }} Kč</span>
+            </div>
+            <div style="margin-top: 10px; width: 100%; display: flex; gap: 12px; flex-wrap: wrap;">
               <a href="/akcie/{{ stock.id }}/" class="versailles-btn">Podrobnosti</a>
-            </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p>Nemáte žádné vybrané akcie.</p>
-        {% endif %}
-      </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>Nemáte žádné vybrané akcie.</p>
+      {% endif %}
     </div>
-    <div class="versailles-frame versailles-shadow" style="background: none;">
-      <h2 class="versailles-header" style="font-size:1.3em;">Vývoj hodnoty portfolia</h2>
-      <p class="card-desc versailles-font">Sledujte, jak se mění celková hodnota vašeho portfolia v čase.</p>
-      <canvas id="portfolioChart" height="80" class="lux-chart versailles-frame"></canvas>
+    <div style="margin-top: 18px; width: 100%; display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="/akcie/create/" class="versailles-btn">Přidat novou akcii</a>
     </div>
-    <div class="versailles-frame versailles-shadow" style="background: none;">
-      <h2 class="versailles-header" style="font-size:1.3em;">Vývoj příjmů z dividend</h2>
-      <p class="card-desc versailles-font">Přehled přijatých dividend v jednotlivých obdobích.</p>
-      <canvas id="dividendChart" height="80" class="lux-chart versailles-frame"></canvas>
-    </div>
-    <div class="versailles-frame versailles-shadow" style="background: none;">
-      <h2 class="versailles-header" style="font-size:1.3em;">Rozložení portfolia podle akcií</h2>
-      <p class="card-desc versailles-font">Podíl jednotlivých akcií na celkové hodnotě portfolia.</p>
-      <canvas id="distributionChart" height="80" class="lux-chart versailles-frame"></canvas>
-    </div>
+  </div>
+  <div class="card">
+    <h2>Vývoj hodnoty portfolia</h2>
+    <canvas id="portfolioChart" height="180" style="width:100%;max-width:480px;"></canvas>
+  </div>
+  <div class="card">
+    <h2>Vývoj příjmů z dividend</h2>
+    <canvas id="dividendChart" height="180" style="width:100%;max-width:480px;"></canvas>
+  </div>
+  <div class="card">
+    <h2>Rozložení portfolia podle akcií</h2>
+    <canvas id="distributionChart" height="180" style="width:100%;max-width:340px;"></canvas>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Vývoj hodnoty portfolia v čase
-const historyLabels = {{ history_labels|safe }};
-const historyValues = {{ history_values|safe }};
+const historyLabels = {{ history_labels|default:'[]'|safe }};
+const historyValues = {{ history_values|default:'[]'|safe }};
 const ctx1 = document.getElementById('portfolioChart').getContext('2d');
 new Chart(ctx1, {
     type: 'line',
-    data: {
-        labels: historyLabels,
-        datasets: [{
-            label: 'Hodnota portfolia (Kč)',
-            data: historyValues,
-            borderColor: '#bfa14a',
-            backgroundColor: 'rgba(191,161,74,0.15)',
-            fill: true,
-            tension: 0.2
-        }]
-    },
-    options: {
-        plugins: { legend: { labels: { color: '#fffbe6' } } },
-        scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } }
-    }
+    data: { labels: historyLabels, datasets: [{ label: 'Hodnota portfolia (Kč)', data: historyValues, borderColor: '#bfa14a', backgroundColor: 'rgba(191,161,74,0.13)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#fffbe6', pointBorderColor: '#bfa14a', pointHoverRadius: 6, pointHoverBackgroundColor: '#bfa14a', pointHoverBorderColor: '#fffbe6' }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#fffbe6', font: {size: 14, family: 'Playfair Display, serif'} } } }, scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } } }
 });
-// Vývoj příjmů z dividend
-const dividendLabels = {{ dividend_labels|safe }};
-const dividendValues = {{ dividend_values|safe }};
+const dividendLabels = {{ dividend_labels|default:'[]'|safe }};
+const dividendValues = {{ dividend_values|default:'[]'|safe }};
 const ctx2 = document.getElementById('dividendChart').getContext('2d');
 new Chart(ctx2, {
     type: 'bar',
-    data: {
-        labels: dividendLabels,
-        datasets: [{
-            label: 'Dividendy',
-            data: dividendValues,
-            backgroundColor: '#bfa14a',
-            borderColor: '#fffbe6',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        plugins: { legend: { labels: { color: '#fffbe6' } } },
-        scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } }
-    }
+    data: { labels: dividendLabels, datasets: [{ label: 'Dividendy', data: dividendValues, backgroundColor: 'rgba(191,161,74,0.85)', borderColor: '#fffbe6', borderWidth: 2, borderRadius: 8, hoverBackgroundColor: '#fffbe6', hoverBorderColor: '#bfa14a' }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#fffbe6', font: {size: 14, family: 'Playfair Display, serif'} } } }, scales: { x: { ticks: { color: '#fffbe6' } }, y: { ticks: { color: '#fffbe6' } } } }
 });
-// Rozložení portfolia
-const distLabels = {{ dist_labels|safe }};
-const distValues = {{ dist_values|safe }};
+const distLabels = {{ dist_labels|default:'[]'|safe }};
+const distValues = {{ dist_values|default:'[]'|safe }};
 const ctx3 = document.getElementById('distributionChart').getContext('2d');
 new Chart(ctx3, {
     type: 'pie',
-    data: {
-        labels: distLabels,
-        datasets: [{
-            data: distValues,
-            backgroundColor: [
-                '#bfa14a', '#fffbe6', '#232323', '#181818', '#fff', '#000'
-            ],
-            borderColor: '#fffbe6',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        plugins: { legend: { labels: { color: '#fffbe6' } } }
-    }
+    data: { labels: distLabels, datasets: [{ data: distValues, backgroundColor: ['#bfa14a', '#fffbe6', '#232323', '#181818', '#fff', '#000'], borderColor: '#fffbe6', borderWidth: 2 }] },
+    options: { plugins: { legend: { labels: { color: '#fffbe6' } } } }
 });
 </script>
-
-<style>
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 10px 10px 10px;
-}
-.dashboard-title {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 2.2em;
-  color: #bfa14a;
-}
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 30px;
-}
-.dashboard-card {
-  background: #181818;
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(191,161,74,0.07);
-  padding: 24px 18px 18px 18px;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  border: 1.5px solid #bfa14a;
-}
-.card-desc {
-  color: #fffbe6;
-  font-size: 0.98em;
-  margin-bottom: 10px;
-}
-.stock-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.stock-item {
-  margin: 10px 0;
-  padding: 12px 10px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  transition: box-shadow 0.2s;
-}
-.stock-item:hover {
-  box-shadow: 0 2px 8px rgba(191,161,74,0.08);
-}
-.stock-meta {
-  color: #fffbe6;
-  font-size: 0.95em;
-}
-.details-link {
-  color: #bfa14a;
-  text-decoration: none;
-  font-weight: bold;
-  margin-left: 10px;
-}
-.details-link:hover {
-  text-decoration: underline;
-}
-canvas {
-  margin: 20px 0 10px 0;
-  background: #181818;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(191,161,74,0.07);
-  padding: 10px;
-  max-width: 100%;
-  border: 2px solid #bfa14a;
-}
-@media (max-width: 900px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.lux-dashboard {
-  background: linear-gradient(135deg, #181818 0%, #232323 100%);
-  color: #fff;
-}
-.lux-stock-item {
-  background: #181818;
-  border: 1.5px solid #bfa14a;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  padding: 12px 18px;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(191,161,74,0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.lux-stock-item strong { color: #bfa14a; font-size: 1.1em; }
-.lux-chart {
-  background: #181818;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(191,161,74,0.13);
-  border: 2px solid #bfa14a;
-}
-</style>
 {% endblock %}

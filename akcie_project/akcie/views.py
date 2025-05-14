@@ -230,12 +230,12 @@ def index(request):
 
     context = {
         'user_stocks': user_stocks,
-        'history_labels': history_labels,
-        'history_values': history_values,
-        'dividend_labels': dividend_labels,
-        'dividend_values': dividend_values,
-        'dist_labels': dist_labels,
-        'dist_values': dist_values,
+        'history_labels': history_labels if history_labels is not None else [],
+        'history_values': history_values if history_values is not None else [],
+        'dividend_labels': dividend_labels if dividend_labels is not None else [],
+        'dividend_values': dividend_values if dividend_values is not None else [],
+        'dist_labels': dist_labels if dist_labels is not None else [],
+        'dist_values': dist_values if dist_values is not None else [],
     }
     return render(request, 'akcie/index.html', context)
 
