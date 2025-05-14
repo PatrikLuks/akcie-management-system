@@ -4,7 +4,7 @@ from openpyxl.styles import Font
 from django.http import HttpResponse, FileResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Avg
 from django.db.models.functions import TruncMonth
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -381,7 +381,53 @@ def dividenda_list(request):
         )
     else:
         dividendy = Dividenda.objects.all()
-    return render(request, 'akcie/dividenda_list.html', {'dividendy': dividendy})
+
+    # Souhrnné statistiky
+    from django.db.models import Avg, Max, Min, Count, Sum
+    total_dividendy = dividendy.aggregate(Sum('castka'))['castka__sum'] or 0
+    avg_dividenda = dividendy.aggregate(Avg('castka'))['castka__avg'] or 0
+    count_dividendy = dividendy.count()
+    nejblizsi = dividendy.filter(datum__gte=now().date()).order_by('datum').first()
+    nejblizsi_vyplata = nejblizsi.datum if nejblizsi else None
+    nejblizsi_castka = nejblizsi.castka if nejblizsi else None
+
+    # Vývoj dividend v čase (agregace podle měsíce)
+    from django.db.models.functions import TruncMonth
+    timeline = (
+        dividendy
+        .annotate(month=TruncMonth('datum'))
+        .values('month')
+        .order_by('month')
+        .annotate(total=Sum('castka'))
+    )
+    timeline_labels = [str(item['month']) for item in timeline]
+    timeline_values = [float(item['total']) for item in timeline]
+
+    # Rozložení dividend podle akcií
+    rozlozeni = (
+        dividendy
+        .values('akcie__nazev')
+        .annotate(total=Sum('castka'))
+        .order_by('-total')
+    )
+    rozlozeni_labels = [item['akcie__nazev'] for item in rozlozeni]
+    rozlozeni_values = [float(item['total']) for item in rozlozeni]
+
+    context = {
+        'dividendy': dividendy,
+        'total_dividendy': total_dividendy,
+        'avg_dividenda': avg_dividenda,
+        'count_dividendy': count_dividendy,
+        'nejblizsi_vyplata': nejblizsi_vyplata,
+        'nejblizsi_castka': nejblizsi_castka,
+        'timeline_labels': timeline_labels,
+        'timeline_values': timeline_values,
+        'rozlozeni_labels': rozlozeni_labels,
+        'rozlozeni_values': rozlozeni_values,
+        'today': now().date(),
+        'request': request,
+    }
+    return render(request, 'akcie/dividenda_list.html', context)
 
 def dividenda_detail(request, pk):
     dividenda = Dividenda.objects.get(pk=pk)

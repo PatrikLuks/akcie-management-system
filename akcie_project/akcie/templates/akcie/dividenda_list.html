@@ -1,48 +1,180 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Seznam dividend</h1>
+<div class="dashboard-container">
+  <h1 class="dashboard-title">Dividendy – přehled a analýza</h1>
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <h2>Souhrnné statistiky</h2>
+      <ul class="stats-list">
+        <li><strong>Celkový příjem z dividend:</strong> {{ total_dividendy|floatformat:2 }} Kč</li>
+        <li><strong>Průměrná dividenda:</strong> {{ avg_dividenda|floatformat:2 }} Kč</li>
+        <li><strong>Počet výplat:</strong> {{ count_dividendy }}</li>
+        <li><strong>Nejbližší výplata:</strong> {% if nejblizsi_vyplata %}{{ nejblizsi_vyplata }} ({{ nejblizsi_castka|floatformat:2 }} Kč){% else %}–{% endif %}</li>
+      </ul>
+      <a href="/dividendy/export/" class="button">Exportovat dividendy do CSV</a>
+      <a href="/dividendy/create/" class="button">Přidat novou dividendu</a>
+    </div>
+    <div class="dashboard-card">
+      <h2>Vývoj příjmů z dividend</h2>
+      <canvas id="timelineChart" height="80"></canvas>
+    </div>
+    <div class="dashboard-card">
+      <h2>Rozložení dividend podle akcií</h2>
+      <canvas id="rozlozeniChart" height="80"></canvas>
+    </div>
+    <div class="dashboard-card">
+      <h2>Tabulka dividend</h2>
+      <form method="get" action="" style="margin-bottom:10px;">
+        <input type="text" name="q" placeholder="Hledat..." value="{{ request.GET.q }}">
+        <button type="submit">Hledat</button>
+      </form>
+      <div class="table-scroll">
+        <table class="dividendy-table">
+          <thead>
+            <tr>
+              <th>Akcie</th>
+              <th>Datum</th>
+              <th>Částka (Kč)</th>
+              <th>Akce</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dividenda in dividendy %}
+            <tr {% if dividenda.datum >= today %}class="future-dividend"{% endif %}>
+              <td>{{ dividenda.akcie.nazev }}</td>
+              <td>{{ dividenda.datum }}</td>
+              <td>{{ dividenda.castka|floatformat:2 }}</td>
+              <td>
+                <a href="/dividendy/{{ dividenda.id }}/">Detail</a> |
+                <a href="/dividendy/{{ dividenda.id }}/update/">Upravit</a> |
+                <a href="/dividendy/{{ dividenda.id }}/delete/">Smazat</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-<form method="get" action="">
-    <input type="text" name="q" placeholder="Hledat...">
-    <button type="submit">Hledat</button>
-</form>
-
-<ul>
-    {% for dividenda in dividendy %}
-        <li><a href="/dividendy/{{ dividenda.id }}/">Dividenda - {{ dividenda.akcie.nazev }} ({{ dividenda.castka }} Kč, {{ dividenda.datum }})</a></li>
-    {% endfor %}
-</ul>
-<a href="/dividendy/create/">Přidat novou dividendu</a>
-<a href="/dividendy/export/">Exportovat dividendy do CSV</a>
-
-<hr>
-<h2>Vývoj příjmů z dividend</h2>
-<canvas id="dividendChart" height="80"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const dividendLabels = [
-    {% for d in dividendy %}'{{ d.datum }}',{% endfor %}
-];
-const dividendValues = [
-    {% for d in dividendy %}{{ d.castka }},{% endfor %}
-];
-const ctx = document.getElementById('dividendChart').getContext('2d');
-new Chart(ctx, {
+const timelineLabels = {{ timeline_labels|safe }};
+const timelineValues = {{ timeline_values|safe }};
+const ctx1 = document.getElementById('timelineChart').getContext('2d');
+new Chart(ctx1, {
     type: 'bar',
     data: {
-        labels: dividendLabels,
+        labels: timelineLabels,
         datasets: [{
             label: 'Příjmy z dividend (Kč)',
-            data: dividendValues,
+            data: timelineValues,
             backgroundColor: 'rgba(75, 192, 192, 0.6)',
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 1
         }]
     },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } }
-    }
+    options: {responsive: true, plugins: {legend: {display: false}}}
+});
+const rozlozeniLabels = {{ rozlozeni_labels|safe }};
+const rozlozeniValues = {{ rozlozeni_values|safe }};
+const ctx2 = document.getElementById('rozlozeniChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'pie',
+    data: {
+        labels: rozlozeniLabels,
+        datasets: [{
+            label: 'Rozložení dividend',
+            data: rozlozeniValues,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)'
+            ]
+        }]
+    },
+    options: {responsive: true}
 });
 </script>
+
+<style>
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 10px 10px 10px;
+}
+.dashboard-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.2em;
+  color: #007bff;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 30px;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  padding: 24px 18px 18px 18px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+.stats-list li {
+  margin-bottom: 7px;
+}
+.button {
+  display: inline-block;
+  margin: 5px 7px 0 0;
+  padding: 7px 16px;
+  background: #007bff;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1em;
+  transition: background 0.2s;
+}
+.button:hover {
+  background: #0056b3;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.dividendy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+.dividendy-table th, .dividendy-table td {
+  border: 1px solid #eee;
+  padding: 7px 10px;
+  text-align: left;
+}
+.dividendy-table th {
+  background: #f4f4f9;
+}
+.future-dividend {
+  background: #e6f7ff;
+  font-weight: bold;
+}
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 {% endblock %}
