@@ -28,9 +28,17 @@
     </div>
     <div class="versailles-frame versailles-shadow" style="background:none;">
       <h2 class="versailles-header" style="font-size:1.2em;">Tabulka dividend</h2>
-      <form method="get" action="" style="margin-bottom:10px;">
+      <form method="get" action="" style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <input type="text" name="q" placeholder="Hledat..." value="{{ request.GET.q }}">
-        <button type="submit" class="versailles-btn">Hledat</button>
+        <select name="akcie">
+          <option value="">Všechny akcie</option>
+          {% for akcie in akcie_list %}
+            <option value="{{ akcie.id }}" {% if akcie_filter|default:'' == akcie.id|stringformat:'s' %}selected{% endif %}>{{ akcie.nazev }}</option>
+          {% endfor %}
+        </select>
+        <input type="date" name="date_from" value="{{ date_from|default:'' }}">
+        <input type="date" name="date_to" value="{{ date_to|default:'' }}">
+        <button type="submit" class="versailles-btn">Filtrovat</button>
       </form>
       <div class="table-scroll">
         <table class="versailles-table">
@@ -55,6 +63,10 @@
               </td>
             </tr>
             {% endfor %}
+            <tr style="font-weight:bold;background:#fffbe6;color:#bfa14a;">
+              <td colspan="2" style="text-align:right;">Součet zobrazených:</td>
+              <td colspan="2">{{ sum_dividendy|floatformat:2 }} Kč</td>
+            </tr>
           </tbody>
         </table>
       </div>

@@ -2,16 +2,29 @@ import os
 import time
 from django_cron import CronJobBase, Schedule
 from django.utils.timezone import now
-from .views import export_dashboard_graphs_pdf, send_monthly_report
+from django.core.mail import EmailMessage
+from .views import export_dashboard_graphs_pdf, send_monthly_report, generate_pdf_report
+from .models import CustomUser
 
 class MonthlyReportCronJob(CronJobBase):
-    RUN_EVERY_MINS = 43200  # Spouští se jednou za měsíc (30 dní)
-
+    RUN_EVERY_MINS = 60 * 24 * 30  # jednou za měsíc
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'akcie.monthly_report_cron_job'
+    code = 'akcie.monthly_report_cron'
 
     def do(self):
-        send_monthly_report()
+        users = CustomUser.objects.filter(receive_monthly_reports=True)
+        pdf_path = generate_pdf_report()
+        for user in users:
+            subject = "Měsíční report investic"
+            body = f"Dobrý den, {user.username},\n\nPřikládáme měsíční report vašich investic."
+            email = EmailMessage(
+                subject,
+                body,
+                'noreply@finporadce-premium.cz',
+                [user.email]
+            )
+            email.attach_file(pdf_path)
+            email.send()
 
 class BackupDatabaseCronJob(CronJobBase):
     RUN_EVERY_MINS = 1440  # Spuštění jednou denně

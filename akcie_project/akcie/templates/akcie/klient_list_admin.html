@@ -1,0 +1,39 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<div class="versailles-frame versailles-shadow" style="max-width: 1000px; margin: 48px auto 0 auto;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Seznam klientů (admin)</h1>
+  <hr class="versailles-divider">
+  <form method="get" style="margin-bottom:18px;">
+    <label for="poradce">Poradce:</label>
+    <select name="poradce" id="poradce" onchange="this.form.submit()">
+      <option value="">Všichni</option>
+      {% for poradce in poradci %}
+        <option value="{{ poradce.id }}" {% if poradce_id|default:'' == poradce.id|stringformat:'s' %}selected{% endif %}>{{ poradce.get_full_name }} ({{ poradce.email }})</option>
+      {% endfor %}
+    </select>
+  </form>
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Jméno</th>
+        <th>Příjmení</th>
+        <th>Email</th>
+        <th>Telefon</th>
+        <th>Poradce</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for klient in klienti %}
+      <tr>
+        <td>{{ klient.jmeno }}</td>
+        <td>{{ klient.prijmeni }}</td>
+        <td>{{ klient.email }}</td>
+        <td>{{ klient.telefon }}</td>
+        <td>{{ klient.poradce.get_full_name }} ({{ klient.poradce.email }})</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -17,16 +17,19 @@ from io import BytesIO
 from django.urls import reverse
 from django.core.mail import EmailMessage
 from django.utils.timezone import now
+from django.utils import timezone
 from datetime import datetime, timedelta
 import os
 import zipfile
 import requests
 import yfinance as yf
-from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser, AuditLog
-from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm
+from .models import Akcie, Transakce, Dividenda, Aktivita, CustomUser, AuditLog, Klient, Portfolio
+from .forms import AkcieForm, TransakceForm, DividendaForm, CustomUserForm, KlientForm, PortfolioForm
 from .utils_pdf import add_luxury_branding
 from functools import wraps
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum
+import pandas as pd
 
 API_URL = 'https://example.com/api/akcie'  # Nahraďte skutečnou URL API
 TREND_API_URL = 'https://api.example.com/trends'  # Skutečná URL API
@@ -149,6 +152,341 @@ def convert_to_czk_api(request):
         return JsonResponse({'czk': czk})
     except Exception as e:
         return JsonResponse({'czk': None, 'error': str(e)})
+
+@login_required
+@poradce_required
+def klient_list(request):
+    klienti = Klient.objects.all()
+    return render(request, 'akcie/klient_list.html', {'klienti': klienti})
+
+@login_required
+@admin_required
+def klient_list_admin(request):
+    poradci = CustomUser.objects.filter(groups__name='Poradce')
+    poradce_id = request.GET.get('poradce')
+    klienti = Klient.objects.all()
+    if poradce_id:
+        klienti = klienti.filter(poradce_id=poradce_id)
+    return render(request, 'akcie/klient_list_admin.html', {'klienti': klienti, 'poradci': poradci, 'poradce_id': poradce_id})
+
+@login_required
+@poradce_required
+def klient_create(request):
+    if request.method == 'POST':
+        form = KlientForm(request.POST)
+        if form.is_valid():
+            klient = form.save(commit=False)
+            klient.save()
+            return redirect('klient_list')
+    else:
+        form = KlientForm()
+    return render(request, 'akcie/klient_form.html', {'form': form})
+
+@login_required
+@poradce_required
+def klient_update(request, pk):
+    klient = get_object_or_404(Klient, pk=pk)
+    if request.method == 'POST':
+        form = KlientForm(request.POST, instance=klient)
+        if form.is_valid():
+            form.save()
+            return redirect('klient_list')
+    else:
+        form = KlientForm(instance=klient)
+    return render(request, 'akcie/klient_form.html', {'form': form})
+
+@login_required
+@admin_required
+def klient_delete(request, pk):
+    klient = get_object_or_404(Klient, pk=pk)
+    if request.method == 'POST':
+        klient.delete()
+        return redirect('klient_list')
+    return render(request, 'akcie/klient_confirm_delete.html', {'klient': klient})
+
+@login_required
+@poradce_required
+def klient_report_pdf(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id, poradce=request.user)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="report_{klient.jmeno}_{klient.prijmeni}.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, f"Report klienta: {klient.jmeno} {klient.prijmeni}")
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 730, f"Email: {klient.email}")
+    p.drawString(50, 715, f"Telefon: {klient.telefon}")
+    p.drawString(50, 700, f"Adresa: {klient.adresa}")
+    y = 670
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(50, y, "Portfolia:")
+    y -= 20
+    p.setFont("Helvetica", 12)
+    for portfolio in klient.portfolia.all():
+        p.drawString(60, y, f"- {portfolio.nazev}: {portfolio.popis}")
+        y -= 15
+        if y < 100:
+            p.showPage()
+            y = 750
+    p.showPage()
+    p.save()
+    return response
+
+@login_required
+@poradce_required
+def klient_report_send_email(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id, poradce=request.user)
+    # Vygeneruj PDF do paměti
+    from io import BytesIO
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, f"Report klienta: {klient.jmeno} {klient.prijmeni}")
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 730, f"Email: {klient.email}")
+    p.drawString(50, 715, f"Telefon: {klient.telefon}")
+    p.drawString(50, 700, f"Adresa: {klient.adresa}")
+    y = 670
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(50, y, "Portfolia:")
+    y -= 20
+    p.setFont("Helvetica", 12)
+    for portfolio in klient.portfolia.all():
+        p.drawString(60, y, f"- {portfolio.nazev}: {portfolio.popis}")
+        y -= 15
+        if y < 100:
+            p.showPage()
+            y = 750
+    p.showPage()
+    p.save()
+    pdf = buffer.getvalue()
+    buffer.close()
+    # Odeslání e-mailem
+    subject = f"Report klienta {klient.jmeno} {klient.prijmeni}"
+    body = f"Dobrý den,\nv příloze naleznete report klienta {klient.jmeno} {klient.prijmeni}."
+    email = EmailMessage(subject, body, to=[klient.email])
+    email.attach(f"report_{klient.jmeno}_{klient.prijmeni}.pdf", pdf, 'application/pdf')
+    email.send()
+    messages.success(request, f'Report byl odeslán na e-mail: {klient.email}')
+    return redirect('poradce_dashboard')
+
+@login_required
+@poradce_required
+def portfolio_list(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    portfolia = klient.portfolia.all()
+    return render(request, 'akcie/portfolio_list.html', {'klient': klient, 'portfolia': portfolia})
+
+@login_required
+@poradce_required
+def portfolio_create(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    if request.method == 'POST':
+        form = PortfolioForm(request.POST)
+        if form.is_valid():
+            portfolio = form.save(commit=False)
+            portfolio.klient = klient
+            portfolio.save()
+            return redirect('portfolio_list', klient_id=klient.id)
+    else:
+        form = PortfolioForm()
+    return render(request, 'akcie/portfolio_form.html', {'form': form, 'klient': klient})
+
+@login_required
+@poradce_required
+def portfolio_update(request, klient_id, pk):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    portfolio = get_object_or_404(Portfolio, pk=pk, klient=klient)
+    if request.method == 'POST':
+        form = PortfolioForm(request.POST, instance=portfolio)
+        if form.is_valid():
+            form.save()
+            return redirect('portfolio_list', klient_id=klient.id)
+    else:
+        form = PortfolioForm(instance=portfolio)
+    return render(request, 'akcie/portfolio_form.html', {'form': form, 'klient': klient})
+
+@login_required
+@admin_required
+def portfolio_delete(request, klient_id, pk):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    portfolio = get_object_or_404(Portfolio, pk=pk, klient=klient)
+    if request.method == 'POST':
+        portfolio.delete()
+        return redirect('portfolio_list', klient_id=klient.id)
+    return render(request, 'akcie/portfolio_confirm_delete.html', {'portfolio': portfolio, 'klient': klient})
+
+@login_required
+@poradce_required
+def export_klienti_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="klienti.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Jméno', 'Příjmení', 'Email', 'Telefon', 'Adresa', 'Poznámka'])
+    for klient in Klient.objects.all():
+        writer.writerow([
+            klient.jmeno,
+            klient.prijmeni,
+            klient.email,
+            klient.telefon,
+            klient.adresa,
+            klient.poznamka
+        ])
+    writer.writerow([])
+    writer.writerow(["--- Luxusní export pro Finanční Poradce Premium ---"])
+    log_aktivita("Export klientů do CSV", request.user.username)
+    return response
+
+@login_required
+@poradce_required
+def export_klienti_excel(request):
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="klienti.xlsx"'
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Klienti"
+    headers = ['Jméno', 'Příjmení', 'Email', 'Telefon', 'Adresa', 'Poznámka']
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="007bff")
+    for klient in Klient.objects.all():
+        ws.append([
+            klient.jmeno,
+            klient.prijmeni,
+            klient.email,
+            klient.telefon,
+            klient.adresa,
+            klient.poznamka
+        ])
+    ws.append([])
+    ws.append(["--- Luxusní export pro Finanční Poradce Premium ---"])
+    log_aktivita("Export klientů do Excelu", request.user.username)
+    wb.save(response)
+    return response
+
+@login_required
+@poradce_required
+def export_klienti_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="klienti_report.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    from .utils_pdf import add_luxury_branding
+    add_luxury_branding(p)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 750, "Report klientů")
+    p.setFont("Helvetica", 12)
+    y = 720
+    for klient in Klient.objects.all():
+        p.drawString(100, y, f"{klient.jmeno} {klient.prijmeni} | {klient.email} | {klient.telefon}")
+        y -= 20
+        if y < 50:
+            p.showPage()
+            add_luxury_branding(p)
+            p.setFont("Helvetica", 12)
+            y = 750
+    p.showPage()
+    p.save()
+    log_aktivita("Export klientů do PDF", request.user.username)
+    return response
+
+@login_required
+@poradce_required
+def export_portfolia_csv(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="portfolia_{klient.jmeno}_{klient.prijmeni}.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Název', 'Popis', 'Datum vytvoření'])
+    for portfolio in klient.portfolia.all():
+        writer.writerow([
+            portfolio.nazev,
+            portfolio.popis,
+            portfolio.datum_vytvoreni.strftime('%d.%m.%Y %H:%M')
+        ])
+    writer.writerow([])
+    writer.writerow(["--- Luxusní export pro Finanční Poradce Premium ---"])
+    log_aktivita(f"Export portfolií klienta {klient}", request.user.username)
+    return response
+
+@login_required
+@poradce_required
+def export_portfolia_excel(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="portfolia_{klient.jmeno}_{klient.prijmeni}.xlsx"'
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Portfolia"
+    headers = ['Název', 'Popis', 'Datum vytvoření']
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="007bff")
+    for portfolio in klient.portfolia.all():
+        ws.append([
+            portfolio.nazev,
+            portfolio.popis,
+            portfolio.datum_vytvoreni.strftime('%d.%m.%Y %H:%M')
+        ])
+    ws.append([])
+    ws.append(["--- Luxusní export pro Finanční Poradce Premium ---"])
+    log_aktivita(f"Export portfolií klienta {klient}", request.user.username)
+    wb.save(response)
+    return response
+
+@login_required
+@poradce_required
+def export_portfolia_pdf(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="portfolia_{klient.jmeno}_{klient.prijmeni}.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    from .utils_pdf import add_luxury_branding
+    add_luxury_branding(p)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 750, f"Report portfolií klienta {klient.jmeno} {klient.prijmeni}")
+    p.setFont("Helvetica", 12)
+    y = 720
+    for portfolio in klient.portfolia.all():
+        p.drawString(100, y, f"{portfolio.nazev} | {portfolio.popis} | {portfolio.datum_vytvoreni.strftime('%d.%m.%Y %H:%M')}")
+        y -= 20
+        if y < 50:
+            p.showPage()
+            add_luxury_branding(p)
+            p.setFont("Helvetica", 12)
+            y = 750
+    p.showPage()
+    p.save()
+    log_aktivita(f"Export portfolií klienta {klient}", request.user.username)
+    return response
+
+@login_required
+def klient_report_pdf(request, klient_id):
+    klient = get_object_or_404(Klient, pk=klient_id, poradce=request.user)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="report_{klient.jmeno}_{klient.prijmeni}.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, f"Report klienta: {klient.jmeno} {klient.prijmeni}")
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 730, f"Email: {klient.email}")
+    p.drawString(50, 715, f"Telefon: {klient.telefon}")
+    p.drawString(50, 700, f"Adresa: {klient.adresa}")
+    y = 670
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(50, y, "Portfolia:")
+    y -= 20
+    p.setFont("Helvetica", 12)
+    for portfolio in klient.portfolia.all():
+        p.drawString(60, y, f"- {portfolio.nazev}: {portfolio.popis}")
+        y -= 15
+        if y < 100:
+            p.showPage()
+            y = 750
+    p.showPage()
+    p.save()
+    return response
 
 @login_required
 def index(request):
@@ -488,13 +826,21 @@ def transakce_delete(request, pk):
 @login_required
 def dividenda_list(request):
     query = request.GET.get('q')
+    akcie_filter = request.GET.get('akcie')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    dividendy = Dividenda.objects.all()
     if query:
-        dividendy = Dividenda.objects.filter(
+        dividendy = dividendy.filter(
             Q(akcie__nazev__icontains=query) |
             Q(castka__icontains=query)
         )
-    else:
-        dividendy = Dividenda.objects.all()
+    if akcie_filter:
+        dividendy = dividendy.filter(akcie__id=akcie_filter)
+    if date_from:
+        dividendy = dividendy.filter(datum__gte=date_from)
+    if date_to:
+        dividendy = dividendy.filter(datum__lte=date_to)
 
     # Souhrnné statistiky
     from django.db.models import Avg, Max, Min, Count, Sum
@@ -527,6 +873,10 @@ def dividenda_list(request):
     rozlozeni_labels = [item['akcie__nazev'] for item in rozlozeni]
     rozlozeni_values = [float(item['total']) for item in rozlozeni]
 
+    # Pro filtr akcií
+    akcie_list = Akcie.objects.all()
+
+    sum_dividendy = dividendy.aggregate(sum=Sum('castka'))['sum'] or 0
     context = {
         'dividendy': dividendy,
         'total_dividendy': total_dividendy,
@@ -540,6 +890,11 @@ def dividenda_list(request):
         'rozlozeni_values': rozlozeni_values,
         'today': now().date(),
         'request': request,
+        'akcie_list': akcie_list,
+        'date_from': date_from,
+        'date_to': date_to,
+        'akcie_filter': akcie_filter,
+        'sum_dividendy': sum_dividendy,
     }
     return render(request, 'akcie/dividenda_list.html', context)
 
@@ -592,22 +947,20 @@ def import_akcie_csv(request):
         reader = csv.reader(decoded_file)
         next(reader)  # Přeskočit hlavičku
         for row in reader:
-            # Očekáváme: nazev, pocet_ks, cena_za_kus, hodnota, nakup, zisk_ztráta, dividenda, ticker, mena
+            # Očekáváme: nazev, pocet_ks, cena_za_kus, hodnota, nakup, zisk_ztráta, ticker, mena
             nazev = row[0]
             pocet_ks = int(row[1])
             cena_za_kus = float(row[2])
             hodnota = float(row[3])
             nakup = float(row[4])
             zisk_ztráta = float(row[5])
-            dividenda = float(row[6])
-            ticker = row[7] if len(row) > 7 else None
-            mena = row[8] if len(row) > 8 else 'CZK'
+            ticker = row[6] if len(row) > 6 else None
+            mena = row[7] if len(row) > 7 else 'CZK'
             # Přepočet na CZK pokud není CZK
             cena_za_kus_czk = convert_to_czk(cena_za_kus, mena)
             hodnota_czk = convert_to_czk(hodnota, mena)
             nakup_czk = convert_to_czk(nakup, mena)
             zisk_ztráta_czk = convert_to_czk(zisk_ztráta, mena)
-            dividenda_czk = convert_to_czk(dividenda, mena)
             Akcie.objects.create(
                 nazev=nazev,
                 pocet_ks=pocet_ks,
@@ -615,7 +968,6 @@ def import_akcie_csv(request):
                 hodnota=hodnota_czk,
                 nakup=nakup_czk,
                 zisk_ztráta=zisk_ztráta_czk,
-                dividenda=dividenda_czk,
                 ticker=ticker,
                 mena=mena
             )
@@ -665,7 +1017,7 @@ def export_akcie_csv(request):
     response['Content-Disposition'] = 'attachment; filename="akcie.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Název', 'Počet kusů', 'Cena za kus', 'Hodnota', 'Nákup', 'Zisk/Ztráta', 'Dividenda'])
+    writer.writerow(['Název', 'Počet kusů', 'Cena za kus', 'Hodnota', 'Nákup', 'Zisk/Ztráta'])
 
     akcie = Akcie.objects.all()
     for a in akcie:
@@ -675,8 +1027,7 @@ def export_akcie_csv(request):
             f"{a.cena_za_kus:,.2f} Kč",
             f"{a.hodnota:,.2f} Kč",
             f"{a.nakup:,.2f} Kč",
-            f"{a.zisk_ztráta:,.2f} Kč",
-            f"{a.dividenda:,.2f} Kč"
+            f"{a.zisk_ztráta:,.2f} Kč"
         ])
 
     # Luxusní podpis a vodoznak
@@ -754,7 +1105,7 @@ def export_excel(request):
     ws.title = "Akcie"
 
     # Přidání záhlaví
-    headers = ["Název", "Počet kusů", "Cena za kus", "Hodnota", "Nákup", "Zisk/Ztráta", "Dividenda"]
+    headers = ["Název", "Počet kusů", "Cena za kus", "Hodnota", "Nákup", "Zisk/Ztráta"]
     ws.append(headers)
     for cell in ws[1]:
         cell.font = Font(bold=True, color="007bff")
@@ -768,8 +1119,7 @@ def export_excel(request):
             float(akcie.cena_za_kus),
             float(akcie.hodnota),
             float(akcie.nakup),
-            float(akcie.zisk_ztráta),
-            float(akcie.dividenda)
+            float(akcie.zisk_ztráta)
         ])
 
     # Luxusní branding
@@ -911,9 +1261,8 @@ def dashboard(request):
         # Pokud by model měl pole 'mena', použij ho, jinak předpokládej CZK
         mena = getattr(a, 'mena', 'CZK')
         hodnota_czk = convert_to_czk(a.hodnota, mena)
-        zisk_ztrata_czk = convert_to_czk(a.zisk_ztrata, mena)
+        zisk_ztrata_czk = convert_to_czk(a.zisk_ztráta, mena)
         total_hodnota += hodnota_czk
-        total_zisk_ztrata += zisk_ztrata_czk
         akcie_data.append({'nazev': a.nazev, 'hodnota': hodnota_czk})
 
     transakce_monthly = (
@@ -1170,14 +1519,53 @@ def api_dividenda_list(request):
 def klienti(request):
     return render(request, 'akcie/klienti.html')
 
+@login_required
+@poradce_required
+def analyzy(request):
+    # Žebříček portfolií podle hodnoty (součet hodnoty všech akcií v portfoliu)
+    zebricek = []
+    for klient in Klient.objects.all():
+        for portfolio in klient.portfolia.all():
+            # Zde lze napojit na model Akcie, pokud bude napojení na portfolio
+            hodnota = 0  # Zatím placeholder, v budoucnu součet hodnoty akcií v portfoliu
+            zebricek.append({
+                'klient': f"{klient.jmeno} {klient.prijmeni}",
+                'portfolio': portfolio.nazev,
+                'hodnota': hodnota
+            })
+    zebricek = sorted(zebricek, key=lambda x: x['hodnota'], reverse=True)[:10]
+
+    # AI predikce (velmi jednoduchá, lineární trend na základě hodnoty portfolia)
+    predikce = []
+    for item in zebricek:
+        # Odhad růstu o 2 % za měsíc (placeholder)
+        predikce.append({
+            'portfolio': item['portfolio'],
+            'predikce': item['hodnota'] * 1.02
+        })
+    return render(request, 'akcie/analyzy.html', {'zebricek': zebricek, 'predikce': predikce})
+
 def reporty(request):
     return render(request, 'akcie/reporty.html')
 
 def analyzy(request):
     return render(request, 'akcie/analyzy.html')
 
+class Notifikace:
+    def __init__(self, typ, zprava, datum):
+        self.typ = typ
+        self.zprava = zprava
+        self.datum = datum
+
+@login_required
 def upozorneni(request):
-    return render(request, 'akcie/upozorneni.html')
+    # Zatím pouze ukázkové notifikace, v budoucnu napojení na model a alerty
+    notifikace = [
+        Notifikace('Systém', 'Byl vygenerován nový měsíční report.', timezone.now()),
+        Notifikace('Portfolio', 'Vaše portfolio překročilo hodnotu 1 000 000 Kč.', timezone.now()),
+        Notifikace('Upozornění', 'Blíží se výplata dividendy.', timezone.now()),
+    ]
+    return render(request, 'akcie/upozorneni.html', {'notifikace': notifikace})
 
 def nastaveni(request):
     return render(request, 'akcie/nastaveni.html')
@@ -1188,5 +1576,38 @@ def vip(request):
 def chat(request):
     return render(request, 'akcie/chat.html')
 
+@login_required
 def integrace(request):
-    return render(request, 'akcie/integrace.html')
+    messages = []
+    if request.method == 'POST' and request.FILES.get('import_file'):
+        import_file = request.FILES['import_file']
+        try:
+            if import_file.name.endswith('.csv'):
+                df = pd.read_csv(import_file)
+            elif import_file.name.endswith('.xlsx'):
+                df = pd.read_excel(import_file)
+            else:
+                messages.append('Nepodporovaný formát souboru.')
+                return render(request, 'akcie/integrace.html', {'messages': messages})
+            # Ukázka: výpis prvních 3 řádků
+            messages.append(f'Načteno {len(df)} záznamů. Náhled:')
+            for i, row in df.head(3).iterrows():
+                messages.append(str(row.to_dict()))
+            # Zde lze napojit na import transakcí/portfolia
+        except Exception as e:
+            messages.append(f'Chyba při importu: {e}')
+    return render(request, 'akcie/integrace.html', {'messages': messages})
+
+@login_required
+@poradce_required
+def poradce_dashboard(request):
+    # Zobrazí přehled klientů a jejich portfolií pro přihlášeného poradce
+    klienti = Klient.objects.filter(poradce=request.user)
+    klient_portfolia = []
+    for klient in klienti:
+        portfolia = klient.portfolia.all()
+        klient_portfolia.append({
+            'klient': klient,
+            'portfolia': portfolia,
+        })
+    return render(request, 'akcie/poradce_dashboard.html', {'klient_portfolia': klient_portfolia})

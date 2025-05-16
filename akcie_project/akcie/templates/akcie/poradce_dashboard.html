@@ -1,0 +1,26 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<div class="versailles-frame versailles-shadow" style="max-width: 1000px; margin: 48px auto 0 auto;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Dashboard poradce</h1>
+  <hr class="versailles-divider">
+  {% if klient_portfolia %}
+    {% for kp in klient_portfolia %}
+      <div class="versailles-frame versailles-shadow" style="margin-bottom: 24px;">
+        <h2 class="versailles-header" style="font-size:1.2em;">Klient: {{ kp.klient.jmeno }} {{ kp.klient.prijmeni }} ({{ kp.klient.email }})</h2>
+        <a href="{% url 'klient_report_pdf' kp.klient.id %}" class="versailles-btn" style="margin-bottom:10px;">Stáhnout PDF report</a>
+        <a href="{% url 'klient_report_send_email' kp.klient.id %}" class="versailles-btn versailles-btn-secondary" style="margin-bottom:10px;">Odeslat report e-mailem</a>
+        <ul>
+          {% for portfolio in kp.portfolia %}
+            <li><b>{{ portfolio.nazev }}</b> – {{ portfolio.popis }} (vytvořeno: {{ portfolio.datum_vytvoreni|date:'d.m.Y' }})</li>
+          {% empty %}
+            <li>Žádné portfolio</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Nemáte přiřazené žádné klienty.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,5 +1,22 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Integrace s brokerem/bankou</h1>
-<p class="lux-placeholder">Propojení s brokerem nebo bankou. Připravujeme.</p>
+<h1>Integrace s brokery a bankami</h1>
+<p class="lux-placeholder">Propojení s brokery/bankami, import transakcí a synchronizace portfolia. První verze integrace je připravena – můžete nahrát výpis ve formátu CSV nebo Excel.</p>
+<div class="versailles-frame versailles-shadow" style="max-width: 700px; margin: 32px auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header">Import dat od brokera/banky</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="import_file">Vyberte soubor (CSV nebo Excel):</label>
+    <input type="file" name="import_file" id="import_file" accept=".csv,.xlsx" required>
+    <button type="submit" class="versailles-btn" style="margin-top:12px;">Importovat</button>
+  </form>
+  {% if messages %}
+    <ul style="margin-top:18px;">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
 {% endblock %}

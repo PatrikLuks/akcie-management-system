@@ -1,0 +1,35 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<div class="versailles-frame versailles-shadow" style="max-width: 900px; margin: 48px auto 0 auto;">
+  <div class="versailles-ornament"></div>
+  <h1 class="versailles-header">Seznam klientů</h1>
+  <hr class="versailles-divider">
+  <a href="{% url 'klient_create' %}" class="versailles-btn" style="margin-bottom:18px;">Přidat klienta</a>
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Jméno</th>
+        <th>Příjmení</th>
+        <th>Email</th>
+        <th>Telefon</th>
+        <th>Akce</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for klient in klienti %}
+      <tr>
+        <td>{{ klient.jmeno }}</td>
+        <td>{{ klient.prijmeni }}</td>
+        <td>{{ klient.email }}</td>
+        <td>{{ klient.telefon }}</td>
+        <td>
+          <a href="{% url 'klient_update' klient.id %}" class="versailles-btn">Upravit</a>
+          <a href="{% url 'klient_delete' klient.id %}" class="versailles-btn versailles-btn-danger">Smazat</a>
+          <a href="{% url 'portfolio_list' klient.id %}" class="versailles-btn">Portfolia</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

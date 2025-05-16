@@ -1,5 +1,20 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
 <h1>VIP sekce</h1>
-<p class="lux-placeholder">Exkluzivní tipy, networking, prémiový obsah. Připravujeme.</p>
+<p class="lux-placeholder">Exkluzivní obsah, networking, chat s analytikem/AI a prémiové nástroje pro VIP klienty a poradce.</p>
+<div class="versailles-frame versailles-shadow" style="max-width: 900px; margin: 32px auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header">VIP obsah</h2>
+  <ul>
+    <li><strong>VIP žebříčky:</strong> Přístup k exkluzivním investičním žebříčkům a analýzám.</li>
+    <li><strong>VIP chat:</strong> Možnost konzultace s analytikem nebo AI (připravujeme).</li>
+    <li><strong>VIP networking:</strong> Propojení s dalšími VIP uživateli a experty.</li>
+    <li><strong>VIP reporty:</strong> Prémiové PDF reporty s detailními rozbory a doporučeními.</li>
+  </ul>
+  <div style="margin-top:24px;">
+    <a href="{% url 'chat' %}" class="versailles-btn">VIP Chat</a>
+    <a href="{% url 'analyzy' %}" class="versailles-btn">VIP Analýzy</a>
+    <a href="{% url 'reporty' %}" class="versailles-btn">VIP Reporty</a>
+  </div>
+</div>
 {% endblock %}

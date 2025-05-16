@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserChangeForm
 from django.utils.timezone import now
 from pytz import timezone
-from .models import Akcie, Transakce, Dividenda, CustomUser
+from .models import Akcie, Transakce, Dividenda, CustomUser, Klient, Portfolio
 
 class AkcieForm(forms.ModelForm):
     prague_tz = timezone('Europe/Prague')
@@ -13,11 +13,10 @@ class AkcieForm(forms.ModelForm):
     hodnota = forms.DecimalField(label='Hodnota', max_digits=15, decimal_places=2, required=False, min_value=0)
     nakup = forms.DecimalField(label='Nákup', max_digits=15, decimal_places=2, required=False, min_value=0)
     zisk_ztrata = forms.DecimalField(label='Zisk/Ztráta', max_digits=15, decimal_places=2, required=False)
-    dividenda = forms.DecimalField(label='Dividenda', max_digits=15, decimal_places=2, required=False, min_value=0)
 
     class Meta:
         model = Akcie
-        fields = ['nazev', 'datum', 'cas', 'pocet_ks', 'cena_za_kus', 'hodnota', 'nakup', 'zisk_ztrata', 'dividenda']
+        fields = ['nazev', 'datum', 'cas', 'pocet_ks', 'cena_za_kus', 'hodnota', 'nakup', 'zisk_ztrata']
 
     def clean_nazev(self):
         nazev = self.cleaned_data['nazev']
@@ -61,3 +60,13 @@ class CustomUserForm(UserChangeForm):
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'receive_monthly_reports', 'email_for_reports')
+
+class KlientForm(forms.ModelForm):
+    class Meta:
+        model = Klient
+        fields = ['jmeno', 'prijmeni', 'email', 'telefon', 'adresa', 'poznamka', 'poradce']
+
+class PortfolioForm(forms.ModelForm):
+    class Meta:
+        model = Portfolio
+        fields = ['nazev', 'popis', 'klient']

@@ -1,5 +1,37 @@
 {% extends 'akcie/base.html' %}
 {% block content %}
-<h1>Analýzy & Trendy</h1>
-<p class="lux-placeholder">AI predikce, žebříčky, horké tipy. Připravujeme.</p>
+<h1>Analýzy & AI</h1>
+<p class="lux-placeholder">Zde najdete žebříčky, predikce, heatmapy a doporučení. První verze analytických nástrojů je nyní dostupná.</p>
+<div class="versailles-frame versailles-shadow" style="max-width: 900px; margin: 32px auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header">Žebříček nejvýkonnějších portfolií</h2>
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Klient</th>
+        <th>Portfolio</th>
+        <th>Celková hodnota (Kč)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in zebricek %}
+      <tr>
+        <td>{{ item.klient }}</td>
+        <td>{{ item.portfolio }}</td>
+        <td>{{ item.hodnota|floatformat:2|intcomma }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="versailles-frame versailles-shadow" style="max-width: 900px; margin: 32px auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header">AI predikce (beta)</h2>
+  <p>Predikce vývoje hodnoty portfolií na základě historických dat a jednoduchého lineárního trendu.</p>
+  <ul>
+    {% for pred in predikce %}
+      <li><strong>{{ pred.portfolio }}</strong>: Odhadovaná hodnota za měsíc: <span style="color:#bfa14a;">{{ pred.predikce|floatformat:2|intcomma }} Kč</span></li>
+    {% endfor %}
+  </ul>
+</div>
 {% endblock %}

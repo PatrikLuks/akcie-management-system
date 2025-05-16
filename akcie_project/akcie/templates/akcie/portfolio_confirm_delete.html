@@ -1,0 +1,14 @@
+{% extends 'akcie/base.html' %}
+{% block content %}
+<div class="versailles-frame versailles-shadow" style="max-width: 500px; margin: 48px auto 0 auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header" style="text-align:center;">Smazat portfolio</h2>
+  <hr class="versailles-divider">
+  <p>Opravdu chcete smazat portfolio <strong>{{ portfolio.nazev }}</strong>?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="versailles-btn versailles-btn-danger" style="width:100%;margin-top:18px;">Ano, smazat</button>
+    <a href="{% url 'portfolio_list' klient.id %}" class="versailles-btn" style="width:100%;margin-top:8px;">Zpět</a>
+  </form>
+</div>
+{% endblock %}

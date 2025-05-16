@@ -2,4 +2,13 @@
 {% block content %}
 <h1>Reporty & Exporty</h1>
 <p class="lux-placeholder">Exporty do PDF, Excel, CSV a luxusní reporty. Připravujeme.</p>
+<div class="versailles-frame versailles-shadow" style="max-width: 700px; margin: 32px auto;">
+  <div class="versailles-ornament"></div>
+  <h2 class="versailles-header">Export klientů</h2>
+  <div class="lux-flex-row" style="gap:12px;">
+    <a href="{% url 'export_klienti_csv' %}" class="versailles-btn">Export CSV</a>
+    <a href="{% url 'export_klienti_excel' %}" class="versailles-btn">Export Excel</a>
+    <a href="{% url 'export_klienti_pdf' %}" class="versailles-btn">Export PDF</a>
+  </div>
+</div>
 {% endblock %}

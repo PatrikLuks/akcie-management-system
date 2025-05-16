@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.views import View
 from . import views
 from .views import user_preferences, export_hot_investments_csv, search_stocks, add_stock, history_dates, auditlog_list
+from .views import klient_list, klient_create, klient_update, klient_delete, portfolio_list, portfolio_create, portfolio_update, portfolio_delete
+from .views import export_klienti_csv, export_klienti_excel, export_portfolia_csv, export_portfolia_excel, export_klienti_pdf, export_portfolia_pdf
 
 class HealthCheckView(View):
     def get(self, request):
@@ -47,6 +49,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard/export/', views.export_dashboard_pdf, name='export_dashboard_pdf'),
     path('dashboard/export_graphs_pdf/', views.export_dashboard_graphs_pdf, name='export_dashboard_graphs_pdf'),
+    path('poradce/dashboard/', views.poradce_dashboard, name='poradce_dashboard'),
     path('aktivity/', views.aktivity_list, name='aktivity_list'),
     path('aktivity/export_csv/', views.export_aktivity_csv, name='export_aktivity_csv'),
     path('aktivity/export_pdf/', views.export_aktivity_pdf, name='export_aktivity_pdf'),
@@ -69,4 +72,21 @@ urlpatterns = [
     path('vip/', views.vip, name='vip'),
     path('chat/', views.chat, name='chat'),
     path('integrace/', views.integrace, name='integrace'),
+    path('klienti/', klient_list, name='klient_list'),
+    path('klienti/create/', klient_create, name='klient_create'),
+    path('klienti/<int:pk>/update/', klient_update, name='klient_update'),
+    path('klienti/<int:pk>/delete/', klient_delete, name='klient_delete'),
+    path('klienti/<int:klient_id>/portfolia/', portfolio_list, name='portfolio_list'),
+    path('klienti/<int:klient_id>/portfolia/create/', portfolio_create, name='portfolio_create'),
+    path('klienti/<int:klient_id>/portfolia/<int:pk>/update/', portfolio_update, name='portfolio_update'),
+    path('klienti/<int:klient_id>/portfolia/<int:pk>/delete/', portfolio_delete, name='portfolio_delete'),
+    path('klienti/export/csv/', export_klienti_csv, name='export_klienti_csv'),
+    path('klienti/export/excel/', export_klienti_excel, name='export_klienti_excel'),
+    path('klienti/<int:klient_id>/portfolia/export/csv/', export_portfolia_csv, name='export_portfolia_csv'),
+    path('klienti/<int:klient_id>/portfolia/export/excel/', export_portfolia_excel, name='export_portfolia_excel'),
+    path('klienti/export/pdf/', export_klienti_pdf, name='export_klienti_pdf'),
+    path('klienti/<int:klient_id>/portfolia/export/pdf/', export_portfolia_pdf, name='export_portfolia_pdf'),
+    path('admin/klienti/', views.klient_list_admin, name='klient_list_admin'),
+    path('poradce/klient/<int:klient_id>/report_pdf/', views.klient_report_pdf, name='klient_report_pdf'),
+    path('poradce/klient/<int:klient_id>/send_report/', views.klient_report_send_email, name='klient_report_send_email'),
 ]

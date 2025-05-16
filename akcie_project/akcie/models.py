@@ -13,7 +13,7 @@ class CustomUser(AbstractUser):
     """
     Rozšířený uživatelský model s preferencemi pro měsíční reporty.
     """
-    receive_monthly_reports = models.BooleanField(default=False)
+    receive_monthly_reports = models.BooleanField(default=True, verbose_name="Zasílat měsíční PDF report e-mailem")
     email_for_reports = models.EmailField(null=True, blank=True)
 
     class Meta:
@@ -32,7 +32,6 @@ class Akcie(models.Model):
     hodnota = models.DecimalField(max_digits=15, decimal_places=2)
     nakup = models.DecimalField(max_digits=15, decimal_places=2)
     zisk_ztrata = models.DecimalField(max_digits=15, decimal_places=2)
-    dividenda = models.DecimalField(max_digits=15, decimal_places=2)
     ticker = models.CharField(max_length=20, null=True, blank=True, help_text="Oficiální ticker akcie dle burzy (např. AAPL pro Apple Inc.)")
     mena = models.CharField(max_length=8, null=True, blank=True, default='CZK', help_text="Měna, ve které je akcie obchodována (např. USD, EUR, CZK)")
 
@@ -75,6 +74,29 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.model_name} {self.object_id} {self.action} {self.timestamp}"
+
+class Klient(models.Model):
+    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, related_name='klient_profile')
+    jmeno = models.CharField(max_length=100)
+    prijmeni = models.CharField(max_length=100)
+    email = models.EmailField()
+    telefon = models.CharField(max_length=30, blank=True)
+    adresa = models.CharField(max_length=255, blank=True)
+    datum_vytvoreni = models.DateTimeField(auto_now_add=True)
+    poznamka = models.TextField(blank=True)
+    poradce = models.ForeignKey(get_user_model(), null=True, blank=True, on_delete=models.SET_NULL, related_name='klienti', help_text='Poradce, který spravuje tohoto klienta')
+
+    def __str__(self):
+        return f"{self.jmeno} {self.prijmeni} ({self.email})"
+
+class Portfolio(models.Model):
+    klient = models.ForeignKey(Klient, on_delete=models.CASCADE, related_name='portfolia')
+    nazev = models.CharField(max_length=100)
+    popis = models.TextField(blank=True)
+    datum_vytvoreni = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.nazev} - {self.klient}"
 
 # --- Audit logika pro Akcie, Transakce, Dividenda ---
 from django.db.models.signals import post_save, post_delete

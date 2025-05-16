@@ -1,15 +1,14 @@
 {% extends 'akcie/base.html' %}
-
 {% block content %}
 <div class="versailles-frame versailles-shadow" style="max-width: 500px; margin: 48px auto 0 auto;">
   <div class="versailles-ornament"></div>
-  <h2 class="versailles-header" style="text-align:center;">Uživatelské preference</h2>
+  <h2 class="versailles-header" style="text-align:center;">{{ form.instance.pk|yesno:'Upravit portfolio,Přidat portfolio' }}</h2>
   <hr class="versailles-divider">
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="versailles-btn" style="width:100%;margin-top:18px;">Uložit</button>
   </form>
-  <p style="margin-top:18px;">Chcete-li dostávat měsíční PDF reporty e-mailem, zaškrtněte volbu níže.</p>
+  <a href="{% url 'portfolio_list' klient.id %}" class="versailles-btn" style="margin-top:18px;">Zpět na portfolia</a>
 </div>
 {% endblock %}
